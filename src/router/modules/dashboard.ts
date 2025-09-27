@@ -1,7 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { DashboardOutlined } from '@vicons/antd';
-import { renderIcon } from '@/utils/index';
 
 const routeName = 'dashboard';
 
@@ -12,8 +10,7 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/dashboard/index',
     component: Layout,
     meta: {
-      title: '平台首页',
-      icon: renderIcon(DashboardOutlined),
+      title: '欢迎',
       sort: 0,
     },
     children: [
@@ -21,7 +18,7 @@ const routes: Array<RouteRecordRaw> = [
         path: 'index',
         name: `${routeName}_index`,
         meta: {
-          title: '平台首页',
+          title: '欢迎',
         },
         component: () => import('@/views/dashboard/index.vue'),
       },

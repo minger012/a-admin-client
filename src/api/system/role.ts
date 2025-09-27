@@ -4,7 +4,7 @@ import { Alova } from '@/utils/http/alova/index';
  * @description: 角色列表
  */
 export function getRoleList(params) {
-  return Alova.Get('/admin/admin/adminAuthList', {
+  return Alova.Get('/admin/adminAuth/list', {
     params,
     meta: {
       isReturnNativeResponse: true,
@@ -16,7 +16,7 @@ export function getRoleList(params) {
  * @description: 添加角色
  */
 export function addRole(params) {
-  return Alova.Post('/admin/admin/adminAuthAdd', params, {
+  return Alova.Post('/admin/adminAuth/add', params, {
     meta: {
       isReturnNativeResponse: true,
     },
@@ -27,7 +27,7 @@ export function addRole(params) {
  * @description: 编辑角色
  */
 export function editRole(params) {
-  return Alova.Post('/admin/admin/adminAuthEdit', params, {
+  return Alova.Post('/admin/adminAuth/edit', params, {
     meta: {
       isReturnNativeResponse: true,
     },
@@ -38,7 +38,7 @@ export function editRole(params) {
  * @description: 删除角色
  */
 export function deleteRole(username) {
-  return Alova.Post('/admin/admin/adminAuthDel', { username }, {
+  return Alova.Post('/admin/adminAuth/del', { username }, {
     meta: {
       isReturnNativeResponse: true,
     },

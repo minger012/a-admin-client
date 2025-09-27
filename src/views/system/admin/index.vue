@@ -1,10 +1,5 @@
 <template>
   <div>
-    <div class="n-layout-page-header">
-      <n-card :bordered="false" title="管理员列表">
-        管理员列表可以管理系统的管理员账号
-      </n-card>
-    </div>
     <n-card :bordered="false" class="mt-4 proCard">
       <BasicTable
         :columns="columns"

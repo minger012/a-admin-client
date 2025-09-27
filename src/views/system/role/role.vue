@@ -1,10 +1,5 @@
 <template>
   <div>
-    <div class="n-layout-page-header">
-      <n-card :bordered="false" title="管理员分组">
-        管理员分组可以设置不同的角色和权限
-      </n-card>
-    </div>
     <n-card :bordered="false" class="mt-4 proCard">
       <BasicTable
         :columns="columns"

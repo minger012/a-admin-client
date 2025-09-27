@@ -1,7 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { BarChartOutlined } from '@vicons/antd';
-import { renderIcon } from '@/utils/index';
 
 /**
  * @param name 路由名称, 必须设置,且不能重名
@@ -21,18 +19,17 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/data/employeeStats',
     component: Layout,
     meta: {
-      title: '数据中心',
-      icon: renderIcon(BarChartOutlined),
-      sort: 7,
-      permissions:['*','4'],
+      title: '数据统计',
+      sort: 9,
+      permissions:['*','9'],
     },
     children: [
       {
         path: 'employeeStats',
         name: 'EmployeeStats',
         meta: {
-          title: '员工统计',
-          permissions:['*','401'],
+          title: '注册统计',
+          permissions:['*','901'],
         },
         component: () => import('@/views/data/employeeStats/index.vue'),
       },
@@ -40,8 +37,8 @@ const routes: Array<RouteRecordRaw> = [
         path: 'teamStats',
         name: 'TeamStats',
         meta: {
-          title: '团队统计',
-          permissions:['*','402'],
+          title: '充值提现统计',
+          permissions:['*','902'],
         },
         component: () => import('@/views/data/teamStats/index.vue'),
       },

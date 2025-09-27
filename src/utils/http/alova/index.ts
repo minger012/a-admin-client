@@ -11,7 +11,6 @@ import { useGlobSetting } from '@/hooks/setting';
 import { PageEnum } from '@/enums/pageEnum';
 import { ResultEnum } from '@/enums/httpEnum';
 import { isUrl } from '@/utils';
-import { useRouter } from 'vue-router';
 
 const { useMock, apiUrl, urlPrefix, loggerMock } = useGlobSetting();
 
@@ -114,8 +113,3 @@ export const Alova = createAlova({
     },
   },
 });
-
-// 项目，多个不同 api 地址，可导出多个实例
-// export const AlovaTwo = createAlova({
-//   baseURL: 'http://localhost:9001',
-// });

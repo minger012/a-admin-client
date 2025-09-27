@@ -74,14 +74,6 @@
     <div class="layout-header-right">
       <!-- 文本链接区域 -->
       <div class="text-link-area">
-        <div class="text-link-item" @click="router.push('/member/moneyManage')">
-          <span>会员购单</span>
-        </div>
-        
-        <div class="text-link-item" @click="router.push('/member/onlineUser')">
-          <span>在线人数</span>
-          <div class="badge online-count-badge" v-if="onlineUserCount > 0">{{ onlineUserCount }}</div>
-        </div>
         
         <div class="text-link-item" @click="router.push('/member/rechargeList')">
           <span>充值订单</span>
@@ -126,7 +118,7 @@
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown trigger="hover" @select="avatarSelect" :options="avatarOptions">
           <div class="avatar">
-            <n-avatar :src="websiteConfig.logo">
+            <n-avatar :src="websiteConfig.logo" v-if="websiteConfig.logo">
               <template #icon>
                 <UserOutlined />
               </template>
@@ -159,12 +151,11 @@
   import { AsideMenu } from '@/layout/components/Menu';
   import { RedirectName } from '@/router/constant';
   import { getWithdrawCount } from '@/api/member/withdraw';
-  import { getOnlineUserCount } from '@/api/system/common';
   import { useScreenLockStore } from '@/store/modules/screenLock';
   import { useUserStore } from '@/store/modules/user';
   import { TABS_ROUTES } from '@/store/mutation-types';
   import { NDialogProvider, useDialog, useMessage } from 'naive-ui';
-  import { computed, defineComponent, reactive, ref, toRefs, unref, watch, onMounted, onUnmounted } from 'vue';
+  import { computed, defineComponent, reactive, ref, toRefs, unref, onMounted, onUnmounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import components from './components';
   import ProjectSetting from './ProjectSetting.vue';
@@ -204,7 +195,6 @@
         hasUnreadWithdraw: false,
         notificationTimerId: null,
         crumbsSetting,
-        onlineUserCount: 0,
       });
 
       const getInverted = computed(() => {
@@ -415,32 +405,15 @@
       // 定时器引用
       let withdrawTimerId:any = null;
       
-      // 获取在线用户数量
-      const fetchOnlineUserCount = () => {
-        getOnlineUserCount().then((res: any) => {
-          if (res.code === 1) {
-            state.onlineUserCount = res.data || 0;
-          }
-        }).catch(err => {
-          console.error('获取在线用户数量失败:', err);
-        });
-      };
-      
-      // 显示在线用户数量
-      const showOnlineUserCount = () => {
-        message.info(`当前在线人数: ${state.onlineUserCount}人`);
-      };
       
       // 启动提现消息和在线用户检查定时器
       const startTimers = () => {
         // 立即检查一次
         checkWithdrawNotifications();
-        fetchOnlineUserCount();
         
         // 设置30秒定时器
         withdrawTimerId = setInterval(() => {
           checkWithdrawNotifications();
-          fetchOnlineUserCount();
         }, 30000); // 30秒
       };
 
@@ -548,7 +521,6 @@
         ...toRefs(state),
         iconList,
         router,
-        showOnlineUserCount,
         toggleFullScreen,
         doLogout,
         route,
@@ -573,6 +545,15 @@
 
 <style lang="less" scoped>
   .layout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    height: 64px;
+    transition: all 0.2s ease-in-out;
+    width: 100%;
+    z-index: 11;
+    border-bottom: 1px solid #efefef;
     /* 图标和计数器的样式 */
     .icon-wrapper {
       position: relative;
@@ -601,10 +582,6 @@
       }
     }
     
-    .online-count-badge {
-      background-color: #52c41a; /* 绿色背景 */
-    }
-    
     .badge {
       position: absolute;
       top: 0;
@@ -621,15 +598,7 @@
       box-shadow: 0 0 0 1px #fff;
       color: #fff;
     }
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0;
-    height: 64px;
-    box-shadow: 0 1px 4px rgb(0 21 41 / 8%);
-    transition: all 0.2s ease-in-out;
-    width: 100%;
-    z-index: 11;
+    
 
     &-left {
       display: flex;

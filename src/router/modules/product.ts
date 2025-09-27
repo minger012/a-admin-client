@@ -1,7 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { ShoppingOutlined } from '@vicons/antd';
-import { renderIcon } from '@/utils/index';
 
 /**
  * @param name 路由名称, 必须设置,且不能重名
@@ -18,57 +16,20 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/product',
     name: 'Product',
-    redirect: '/product/orderManagement',
+    redirect: '/product/productList',
     component: Layout,
     meta: {
-      title: '产品管理',
-      icon: renderIcon(ShoppingOutlined),
-      sort: 6,
-      permissions:['*','3'],
+      title: '产品库',
+      sort: 2,
+      permissions:['*','2'],
     },
     children: [
-      {
-        path: 'orderManagement',
-        name: 'OrderManagement',
-        meta: {
-          title: '注单管理',
-          permissions:['*','304'],
-        },
-        component: () => import('@/views/product/orderManagement/index.vue'),
-      },
-      {
-        path: 'instantOrder',
-        name: 'InstantOrder',
-        meta: {
-          title: '即时注单',
-          permissions:['*','305'],
-        },
-        component: () => import('@/views/product/instantOrder/index.vue'),
-      },
-      {
-        path: 'drawRecord',
-        name: 'DrawRecord',
-        meta: {
-          title: '开奖记录',
-          permissions:['*','303'],
-        },
-        component: () => import('@/views/product/drawRecord/index.vue'),
-      },
-      {
-        path: 'productPreset',
-        name: 'ProductPreset',
-        meta: {
-          title: '产品预设值',
-          permissions:['*','302'],
-        },
-        component: () => import('@/views/product/productPreset/index.vue'),
-      },
       {
         path: 'productList',
         name: 'ProductList',
         meta: {
-          title: '产品列表',
-          permissions:['*','301'],
+          title: '产品库',
+          permissions:['*','201'],
         },
         component: () => import('@/views/product/productList/index.vue'),
       },

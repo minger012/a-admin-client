@@ -1,7 +1,5 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { NotificationOutlined } from '@vicons/antd';
-import { renderIcon } from '@/utils/index';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -10,18 +8,17 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/content/message',
     component: Layout,
     meta: {
-      title: '内容中心',
-      icon: renderIcon(NotificationOutlined),
-      sort: 8,
-      permissions:['*','5'],
+      title: '用户反馈',
+      sort: 11,
+      permissions:['*','11'],
     },
     children: [
       {
         path: 'message',
         name: 'Message',
         meta: {
-          title: '站内信',
-          permissions:['*','501'],
+          title: '用户通知',
+          permissions:['*','1101'],
         },
         component: () => import('@/views/content/message/index.vue'),
       },
@@ -30,7 +27,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Announcement',
         meta: {
           title: '公告',
-          permissions:['*','502'],
+          permissions:['*','1102'],
         },
         component: () => import('@/views/content/announcement/index.vue'),
       },
@@ -39,7 +36,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Activity',
         meta: {
           title: '活动',
-          permissions:['*','503'],
+          permissions:['*','1103'],
         },
         component: () => import('@/views/content/activity/index.vue'),
       },
