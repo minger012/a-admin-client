@@ -582,7 +582,7 @@
             color: v-bind(getBaseColor);
             height: 32px;
             padding: 6px 16px 4px;
-            border-radius: 3px;
+            border-radius: 6px;
             margin-right: 6px;
             cursor: pointer;
             display: inline-block;
@@ -649,11 +649,6 @@
       }
     }
   }
-
-  .tabs-view-default-background {
-    background: #f5f7f9;
-  }
-
   .tabs-view-dark-background {
     background: #101014;
   }

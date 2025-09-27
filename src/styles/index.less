@@ -1,11 +1,46 @@
 @import url('./transition/index.less');
 
-
 // 重写naive-ui的样式
 :root {
-    
+    body {
+        background: linear-gradient(to right, #fdfdfd 0%, #f7f7f7 100%);
+        background-attachment: fixed;
+    }
+    .n-layout {
+        background: transparent !important;
+    }
     .n-layout-sider {
-        background-color: transparent;
+        background: transparent;
     }
     
+    // 菜单项样式
+    .n-menu .n-menu-item-content .n-menu-item-content-header {
+        color: #575757;
+    }
+    .n-menu .n-menu-item-content:not(.n-menu-item-content--disabled):hover .n-menu-item-content-header{
+        color: var(--n-item-color-active);
+    }
+    .n-menu .n-menu-item-content:not(.n-menu-item-content--disabled):hover .n-menu-item-content__arrow{
+        color: var(--n-item-color-active);
+    }
+    .n-menu .n-menu-item-content.n-menu-item-content--selected::before,
+    .n-menu .n-menu-item-content:not(.n-menu-item-content--disabled).n-menu-item-content--selected:hover::before {
+        background-color: #f0f0f0;
+    }
+    .n-menu .n-menu-item-content.n-menu-item-content--selected .n-menu-item-content-header,
+    .n-menu .n-menu-item-content:not(.n-menu-item-content--disabled).n-menu-item-content--selected:hover .n-menu-item-content-header {
+        color: #181818;
+    }
+    .n-menu .n-menu-item-content.n-menu-item-content--child-active .n-menu-item-content-header,
+    .n-menu .n-menu-item-content:not(.n-menu-item-content--disabled).n-menu-item-content--child-active:hover .n-menu-item-content-header,
+    .n-menu .n-menu-item-content.n-menu-item-content--child-active .n-menu-item-content__arrow {
+        color: var(--n-item-color-active);
+    }
+    .n-card {
+        border: 1px solid #efefef;
+        border-radius: 10px;
+    }
+    .n-layout-header {
+        background-color: transparent;
+    }
 }

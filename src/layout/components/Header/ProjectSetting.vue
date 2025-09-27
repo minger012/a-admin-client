@@ -2,7 +2,7 @@
   <n-drawer v-model:show="isDrawer" :width="width" :placement="placement">
     <n-drawer-content :title="title" :native-scrollbar="false">
       <div class="drawer">
-        <n-divider title-placement="center">主题</n-divider>
+        <!-- <n-divider title-placement="center">主题</n-divider>
 
         <div class="justify-center drawer-setting-item dark-switch">
           <n-tooltip placement="bottom">
@@ -22,7 +22,7 @@
             </template>
             <span>{{ designStore.darkTheme ? '深' : '浅' }}色主题</span>
           </n-tooltip>
-        </div>
+        </div> -->
 
         <n-divider title-placement="center">系统主题</n-divider>
 

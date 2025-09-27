@@ -209,6 +209,7 @@
       z-index: 13;
       transition: all 0.2s ease-in-out;
       border-right: 1px solid #efefef;
+      color:black;
       
     }
 
