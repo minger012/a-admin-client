@@ -1,14 +1,15 @@
 <template>
-  <n-card :bordered="false">
+  <n-card :bordered="false" class="proCard">
     <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset">
-     
+      <template #statusSlot="{ model, field }">
+        <n-select v-model:value="model[field]" :options="stateOptions" />
+      </template>
     </BasicForm>
-  </n-card>
-  <n-card :bordered="false" class="mt-3">
+
     <BasicTable
       :columns="columns"
       :request="loadDataTable"
-      :row-key="(row:ProductListData) => row.id"
+      :row-key="(row:PlanListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
       @update:checked-row-keys="onCheckedRow"
@@ -17,20 +18,20 @@
     >
       <template #tableTitle>
         <n-space>
-          <n-button type="primary" @click="addProduct">
+          <n-button type="primary" @click="addPlan">
             <template #icon>
               <n-icon>
                 <PlusOutlined />
               </n-icon>
             </template>
-            新增产品
+            新增计划
           </n-button>
         </n-space>
       </template>
     </BasicTable>
 
-    <!-- 编辑产品弹窗 -->
-    <n-modal v-model:show="showEditModal" :show-icon="false" preset="dialog" title="编辑产品" style="width: 700px;">
+    <!-- 编辑计划弹窗 -->
+    <n-modal v-model:show="showEditModal" :show-icon="false" preset="dialog" :title="formParams.id ? '编辑计划' : '新增计划'" style="width: 700px;">
       <n-form
         :model="formParams"
         :rules="rules"
@@ -39,78 +40,50 @@
         :label-width="120"
         class="py-4"
       >
-        <n-form-item label="产品名称" path="name">
-          <n-input placeholder="请输入产品名称" v-model:value="formParams.name" />
+        <n-form-item label="计划名称" path="name">
+          <n-input placeholder="请输入计划名称" v-model:value="formParams.name" />
         </n-form-item>
-        <n-form-item label="产品类型" path="type_name">
-          <n-input placeholder="请输入产品类型" v-model:value="formParams.type_name" />
+        <n-form-item label="产品" path="goods_id">
+          <ProductSelector v-model:value="formParams.goods_id" placeholder="请选择产品" />
         </n-form-item>
-        <n-form-item label="公司" path="company">
-          <n-input placeholder="请输入公司名称" v-model:value="formParams.company" />
-        </n-form-item>
-        <n-form-item label="简介" path="intro">
+        <n-form-item label="计划简介" path="intro">
           <n-input
             type="textarea"
-            placeholder="请输入产品简介"
+            placeholder="请输入计划简介"
             v-model:value="formParams.intro"
             :autosize="{ minRows: 3, maxRows: 5 }"
           />
         </n-form-item>
         
-        <n-form-item label="Logo" path="logo">
-          <n-upload
-            :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
-            :default-file-list="logoFileList"
-            list-type="image-card"
-            :max="1"
-            :on-before-upload="(file) => handleBeforeUpload(file, 'logo')"
-            name="image"
-            :headers="{'Authorization': userStore.getToken}"
-            @finish="(e) => handleUploadFinish(e, 'logo')"
-            @error="handleUploadError"
-            @remove="() => handleRemove('logo')"
-          >
-            上传Logo
-          </n-upload>
-        </n-form-item>
-        
-        <n-form-item label="产品图片" path="image">
+        <n-form-item label="主图" path="image">
           <n-upload
             :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
             :default-file-list="fileList"
             list-type="image-card"
             :max="1"
-            :on-before-upload="(file) => handleBeforeUpload(file, 'image')"
+            :on-before-upload="handleBeforeUpload"
             name="image"
             :headers="{'Authorization': userStore.getToken}"
-            @finish="(e) => handleUploadFinish(e, 'image')"
+            @finish="handleUploadFinish"
             @error="handleUploadError"
-            @remove="() => handleRemove('image')"
+            @remove="handleRemove"
           >
-            上传产品图片
+            上传主图
           </n-upload>
         </n-form-item>
         
-        <n-form-item label="谷歌商店链接" path="google_play">
-          <n-input placeholder="请输入谷歌商店链接" v-model:value="formParams.google_play" />
-        </n-form-item>
-        
-        <n-form-item label="苹果商店链接" path="app_store">
-          <n-input placeholder="请输入苹果商店链接" v-model:value="formParams.app_store" />
-        </n-form-item>
-        
-        <n-form-item label="应用信息" path="app_info">
+        <n-form-item label="投放内容" path="content">
           <n-card>
             <n-space vertical>
-              <n-button type="primary" @click="addAppInfo">
+              <n-button type="primary" @click="addContent">
                 <template #icon>
                   <n-icon><PlusOutlined /></n-icon>
                 </template>
-                添加信息
+                添加内容
               </n-button>
               <n-data-table
-                :columns="appInfoColumns"
-                :data="formParams.app_info || []"
+                :columns="contentColumns"
+                :data="formParams.content || []"
                 :pagination="false"
                 :bordered="true"
               />
@@ -118,36 +91,54 @@
           </n-card>
         </n-form-item>
         
-        <n-form-item label="排序" path="sort">
-          <n-input-number
-            v-model:value="formParams.sort"
-            :min="0"
-            placeholder="请输入排序"
-          />
+        <n-form-item label="用户定向规则" path="orienteering">
+          <n-card>
+            <n-space vertical>
+              <n-button type="primary" @click="addOrienteering">
+                <template #icon>
+                  <n-icon><PlusOutlined /></n-icon>
+                </template>
+                添加规则
+              </n-button>
+              <n-data-table
+                :columns="orienteeringColumns"
+                :data="formParams.orienteering || []"
+                :pagination="false"
+                :bordered="true"
+              />
+            </n-space>
+          </n-card>
+        </n-form-item>
+        
+        <n-form-item label="投放规则" path="rule">
+          <n-card>
+            <n-space vertical>
+              <n-button type="primary" @click="addRule">
+                <template #icon>
+                  <n-icon><PlusOutlined /></n-icon>
+                </template>
+                添加规则
+              </n-button>
+              <n-data-table
+                :columns="ruleColumns"
+                :data="formParams.rule || []"
+                :pagination="false"
+                :bordered="true"
+              />
+            </n-space>
+          </n-card>
         </n-form-item>
         
         <n-form-item label="状态" path="state">
           <n-select
             v-model:value="formParams.state"
             :options="[
-              { label: '未生效', value: 0 },
-              { label: '生效', value: 1 },
-              { label: '审核中', value: 2 },
-              { label: '封禁', value: 3 },
+              { label: '暂停', value: 0 },
+              { label: '激活', value: 1 },
             ]"
             placeholder="请选择状态"
           />
         </n-form-item>
-        
-        <!-- <n-form-item label="是否热门" path="is_hot">
-          <n-switch v-model:value="formParams.is_hot" :checked-value="1" :unchecked-value="0" />
-          <span class="text-[#666] ml-[10px]">是否设为热门产品</span>
-        </n-form-item>
-        
-        <n-form-item label="是否首页显示" path="is_home">
-          <n-switch v-model:value="formParams.is_home" :checked-value="1" :unchecked-value="0" />
-          <span class="text-[#666] ml-[10px]">是否在首页显示</span>
-        </n-form-item> -->
       </n-form>
 
       <template #action>
@@ -171,8 +162,9 @@
   import { h, reactive, ref } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { columns, ProductListData, stateOptions } from './columns';
-  import { goodsList, goodsAdd, goodsEdit, goodsDel } from '@/api/goods';
+  import ProductSelector from '@/components/ProductSelector/index.vue';
+  import { columns, PlanListData, stateOptions } from './columns';
+  import { planList, planAdd, planEdit, planDel } from '@/api/plan';
   import { getAppEnvConfig } from '@/utils/env';
   import { PlusOutlined, DeleteOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
@@ -182,6 +174,7 @@
   const {
     VITE_GLOB_API_URL_PREFIX,
   } = getAppEnvConfig();
+
   const message = useMessage();
   const actionRef = ref();
   const formRef = ref();
@@ -191,33 +184,26 @@
   // 编辑表单
   const showEditModal = ref(false);
   const formBtnLoading = ref(false);
+  
   // 文件上传状态
   const isUploading = ref(false);
   const formParams:any = reactive({
     id: 0,
-    name: '', // 中文名称
-    company: '', // 公司名称
-    type_name: '', // 产品类型
-    category: '', // 分类
-    intro: '', // 产品简介
-    logo: '', // Logo
-    image: '', // 产品图片
-    google_play: '', // 谷歌商店链接
-    app_store: '', // 苹果商店链接
-    app_info: [], // 应用信息
-    sort: 0, // 排序
-    state: 1, // 状态
-    is_hot: 0, // 是否热门
-    is_home: 0 // 是否首页显示
+    name: '',
+    goods_id: null,
+    intro: '',
+    image: '',
+    content: [],
+    orienteering: [],
+    rule: [],
+    state: 0
   });
 
-  // 产品图片文件列表
+  // 图片文件列表
   const fileList = ref<UploadFileInfo[]>([]);
-  // Logo图片文件列表
-  const logoFileList = ref<UploadFileInfo[]>([]);
   
-  // 应用信息表格列定义
-  const appInfoColumns = [
+  // 内容表格列定义
+  const contentColumns = [
     {
       title: '标题',
       key: 'title',
@@ -225,8 +211,8 @@
         return h(NInput, {
           value: row.title,
           onUpdateValue: (v) => {
-            if (!formParams.app_info) formParams.app_info = [];
-            formParams.app_info[index].title = v;
+            if (!formParams.content) formParams.content = [];
+            formParams.content[index].title = v;
           },
           placeholder: '请输入标题'
         });
@@ -239,8 +225,8 @@
         return h(NInput, {
           value: row.content,
           onUpdateValue: (v) => {
-            if (!formParams.app_info) formParams.app_info = [];
-            formParams.app_info[index].content = v;
+            if (!formParams.content) formParams.content = [];
+            formParams.content[index].content = v;
           },
           placeholder: '请输入内容'
         });
@@ -255,7 +241,103 @@
           h(NButton, {
             text: true,
             type: 'error',
-            onClick: () => removeAppInfo(index)
+            onClick: () => removeContent(index)
+          }, {
+            icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) })
+          })
+        );
+      }
+    }
+  ];
+  
+  // 用户定向规则表格列定义
+  const orienteeringColumns = [
+    {
+      title: '标题',
+      key: 'title',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.title,
+          onUpdateValue: (v) => {
+            if (!formParams.orienteering) formParams.orienteering = [];
+            formParams.orienteering[index].title = v;
+          },
+          placeholder: '请输入标题'
+        });
+      }
+    },
+    {
+      title: '内容',
+      key: 'content',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.content,
+          onUpdateValue: (v) => {
+            if (!formParams.orienteering) formParams.orienteering = [];
+            formParams.orienteering[index].content = v;
+          },
+          placeholder: '请输入内容'
+        });
+      }
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 100,
+      render: (row, index) => {
+        return h('div', { class: 'flex space-x-2' },
+          h(NButton, {
+            text: true,
+            type: 'error',
+            onClick: () => removeOrienteering(index)
+          }, {
+            icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) })
+          })
+        );
+      }
+    }
+  ];
+  
+  // 投放规则表格列定义
+  const ruleColumns = [
+    {
+      title: '标题',
+      key: 'title',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.title,
+          onUpdateValue: (v) => {
+            if (!formParams.rule) formParams.rule = [];
+            formParams.rule[index].title = v;
+          },
+          placeholder: '请输入标题'
+        });
+      }
+    },
+    {
+      title: '内容',
+      key: 'content',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.content,
+          onUpdateValue: (v) => {
+            if (!formParams.rule) formParams.rule = [];
+            formParams.rule[index].content = v;
+          },
+          placeholder: '请输入内容'
+        });
+      }
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 100,
+      render: (row, index) => {
+        return h('div', { class: 'flex space-x-2' },
+          h(NButton, {
+            text: true,
+            type: 'error',
+            onClick: () => removeRule(index)
           }, {
             icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) })
           })
@@ -269,38 +351,17 @@
     name: {
       required: true,
       trigger: ['blur', 'input'],
-      message: '请输入产品名称',
+      message: '请输入计划名称',
     },
-    company: {
+    goods_id: {
       required: true,
       trigger: ['blur', 'input'],
-      message: '请输入公司名称',
-    },
-    type_name: {
-      required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入产品类型名称',
-    },
-    intro: {
-      required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入产品简介',
-    },
-    logo: {
-      required: true,
-      trigger: ['blur', 'change'],
-      message: '请上传Logo',
+      message: '请输入产品ID',
     },
     image: {
       required: true,
       trigger: ['blur', 'change'],
-      message: '请上传产品图片',
-    },
-    sort: {
-      required: false,
-      type:'number',
-      trigger: ['blur', 'change'],
-      message: '请输入排序',
+      message: '请上传主图',
     },
   };
 
@@ -309,7 +370,7 @@
     {
       field: 'id',
       component: 'NInput',
-      label: '产品ID',
+      label: '计划ID',
       componentProps: {
         placeholder: '',
       },
@@ -322,7 +383,22 @@
         placeholder: '请选择',
         options: stateOptions,
       },
-    }
+      slot: 'statusSlot',
+    },
+    {
+      field: 'timeRange',
+      component: 'NDatePicker',
+      label: '创建时间',
+      componentProps: {
+        type: 'daterange',
+        clearable: true,
+        shortcuts: {
+          '一周内': [Date.now() - 7 * 24 * 60 * 60 * 1000, Date.now()],
+          '一个月内': [Date.now() - 30 * 24 * 60 * 60 * 1000, Date.now()],
+          '三个月内': [Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now()],
+        },
+      },
+    },
   ];
 
   // 表格操作列配置
@@ -361,7 +437,13 @@
     },
   });
 
-  const searchForm = ref({})
+  interface SearchFormType {
+    id?: string;
+    state?: number | string;
+    timeRange?: [number, number];
+  }
+  
+  const searchForm = ref<SearchFormType>({})
 
   const [register] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
@@ -369,43 +451,44 @@
     schemas,
   });
 
-  // 新增产品
-  function addProduct() {
+  // 新增计划
+  function addPlan() {
     // 重置基础字段
     Object.assign(formParams, {
       id: 0,
       name: '',
-      company: '',
-      type_name: '',
-      category: '',
+      goods_id: null,
       intro: '',
-      logo: '',
       image: '',
-      google_play: '',
-      app_store: '',
-      app_info: [],
-      sort: 0,
-      state: 1, // 默认生效
-      is_hot: 0,
-      is_home: 0
+      content: [],
+      orienteering: [],
+      rule: [],
+      state: 0
     });
     
-    // 重置所有文件列表
+    // 重置文件列表
     fileList.value = [];
-    logoFileList.value = [];
     
     showEditModal.value = true;
   }
 
   // 加载表格数据
   async function loadDataTable({ page, pageSize }) {
-    const params = {
+    const params:any = {
       page: String(page),
       pageSize: String(pageSize),
       ...searchForm.value,
     };
+    
+    // 处理时间范围
+    if (params.timeRange && params.timeRange.length === 2) {
+      params.sTime = Math.floor(params.timeRange[0] / 1000);
+      params.eTime = Math.floor(params.timeRange[1] / 1000);
+      delete params.timeRange;
+    }
+    
     try {
-      const res:any = await goodsList(params)
+      const res:any = await planList(params)
       const responseData = res.data;
       return {
         page: responseData.page,
@@ -415,7 +498,7 @@
         list: responseData.list || [],
       }
     } catch (error) {
-      message.error('获取产品列表失败');
+      message.error('获取计划列表失败');
       return {
         list: [],
         page: 1,
@@ -435,7 +518,7 @@
   }
 
   // 处理文件上传前的验证
-  const handleBeforeUpload = (data: { file: UploadFileInfo }, type: 'image' | 'logo' = 'image') => {
+  const handleBeforeUpload = (data: { file: UploadFileInfo }) => {
     const { file } = data;
     if (!file.file) return false;
     
@@ -457,7 +540,7 @@
   };
 
   // 处理上传完成
-  const handleUploadFinish = (options: any, type: 'image' | 'logo' = 'image') => {
+  const handleUploadFinish = (options: any) => {
     const { file, event } = options;
     
     try {
@@ -465,25 +548,23 @@
       if (response.code === 1) {
         // 更新文件状态和URL
         file.url = response.data.url;
-        formParams[type] = response.data.url;
+        formParams.image = response.data.url;
         message.success('上传成功');
       } else {
         message.error('上传失败: ' + response.msg || '未知错误');
         // 删除上传失败的文件
-        const fileListRef = type === 'image' ? fileList : logoFileList;
-        const index = fileListRef.value.findIndex(f => f.id === file.id);
+        const index = fileList.value.findIndex(f => f.id === file.id);
         if (index !== -1) {
-          fileListRef.value.splice(index, 1);
+          fileList.value.splice(index, 1);
         }
       }
     } catch (error) {
       console.error('上传响应解析错误:', error);
       message.error('上传失败');
       // 删除上传失败的文件
-      const fileListRef = type === 'image' ? fileList : logoFileList;
-      const index = fileListRef.value.findIndex(f => f.id === file.id);
+      const index = fileList.value.findIndex(f => f.id === file.id);
       if (index !== -1) {
-        fileListRef.value.splice(index, 1);
+        fileList.value.splice(index, 1);
       }
     } finally {
       // 无论成功还是失败，重置上传状态
@@ -498,24 +579,42 @@
   };
   
   // 处理删除
-  const handleRemove = (type: 'image' | 'logo' = 'image') => {
-    formParams[type] = '';
-    if (type === 'image') {
-      fileList.value = [];
-    } else {
-      logoFileList.value = [];
-    }
+  const handleRemove = () => {
+    formParams.image = '';
+    fileList.value = [];
   };
 
-  // 添加应用信息
-  const addAppInfo = () => {
-    if (!formParams.app_info) formParams.app_info = [];
-    formParams.app_info.push({ title: '', content: '' });
+  // 添加投放内容
+  const addContent = () => {
+    if (!formParams.content) formParams.content = [];
+    formParams.content.push({ title: '', content: '' });
   };
   
-  // 删除应用信息
-  const removeAppInfo = (index) => {
-    formParams.app_info.splice(index, 1);
+  // 删除投放内容
+  const removeContent = (index) => {
+    formParams.content.splice(index, 1);
+  };
+  
+  // 添加用户定向规则
+  const addOrienteering = () => {
+    if (!formParams.orienteering) formParams.orienteering = [];
+    formParams.orienteering.push({ title: '', content: '' });
+  };
+  
+  // 删除用户定向规则
+  const removeOrienteering = (index) => {
+    formParams.orienteering.splice(index, 1);
+  };
+  
+  // 添加投放规则
+  const addRule = () => {
+    if (!formParams.rule) formParams.rule = [];
+    formParams.rule.push({ title: '', content: '' });
+  };
+  
+  // 删除投放规则
+  const removeRule = (index) => {
+    formParams.rule.splice(index, 1);
   };
 
   // 确认编辑表单
@@ -532,25 +631,19 @@
         const submitData = {
           id: formParams.id,
           name: formParams.name,
-          company: formParams.company,
-          type_name: formParams.type_name,
-          category: formParams.category,
+          goods_id: formParams.goods_id,
           intro: formParams.intro,
-          logo: formParams.logo,
           image: formParams.image,
-          google_play: formParams.google_play,
-          app_store: formParams.app_store,
-          app_info: JSON.stringify(formParams.app_info || []),
-          sort: formParams.sort,
-          state: formParams.state,
-          is_hot: formParams.is_hot,
-          is_home: formParams.is_home
+          content: JSON.stringify(formParams.content || []),
+          orienteering: JSON.stringify(formParams.orienteering || []),
+          rule: JSON.stringify(formParams.rule || []),
+          state: formParams.state
         };
         
         // 发送请求
         if (formParams.id) {
           // 编辑
-          const res:any = await goodsEdit(submitData);
+          const res:any = await planEdit(submitData);
           if (res.code === 1) {
             message.success('修改成功');
             showEditModal.value = false;
@@ -560,7 +653,7 @@
           }
         } else {
           // 新增
-          const res:any = await goodsAdd(submitData);
+          const res:any = await planAdd(submitData);
           if (res.code === 1) {
             message.success('添加成功');
             showEditModal.value = false;
@@ -578,58 +671,67 @@
     }, 0);
   }
 
-  // 编辑产品
+  // 编辑计划
   function handleEdit(record: Recordable) {
-    let appInfo = []
+    let content = [];
+    let orienteering = [];
+    let rule = [];
+    
     try {
-      appInfo = JSON.parse(record.app_info);
+      content = Array.isArray(record.content) ? record.content : 
+               (typeof record.content === 'string' ? JSON.parse(record.content) : []);
     } catch (error) {
-      console.error('解析app_info失败:', error);
+      console.error('解析content失败:', error);
     }
+    
+    try {
+      orienteering = Array.isArray(record.orienteering) ? record.orienteering : 
+                    (typeof record.orienteering === 'string' ? JSON.parse(record.orienteering) : []);
+    } catch (error) {
+      console.error('解析orienteering失败:', error);
+    }
+    
+    try {
+      rule = Array.isArray(record.rule) ? record.rule : 
+            (typeof record.rule === 'string' ? JSON.parse(record.rule) : []);
+    } catch (error) {
+      console.error('解析rule失败:', error);
+    }
+    
     // 重置表单
     Object.assign(formParams, {
       id: record.id,
       name: record.name,
-      company: record.company || '',
-      type_name: record.type_name || '',
-      category: record.category || '',
+      goods_id: record.goods_id,
       intro: record.intro || '',
-      logo: record.logo || '',
       image: record.image || '',
-      google_play: record.google_play || '',
-      app_store: record.app_store || '',
-      app_info: appInfo,
-      sort: record.sort || 0,
-      state: record.state !== undefined ? record.state : 1,
-      is_hot: record.is_hot || 0,
-      is_home: record.is_home || 0
+      content: content,
+      orienteering: orienteering,
+      rule: rule,
+      state: record.state !== undefined ? record.state : 0
     });
     
-    // 设置产品图片
+    // 设置图片
     fileList.value = record.image ? [{
       id: '1',
-      name: '产品图片',
+      name: '主图',
       status: 'finished',
       url: record.image
-    }] : [];
-    
-    // 设置Logo图片
-    logoFileList.value = record.logo ? [{
-      id: '2',
-      name: 'Logo',
-      status: 'finished',
-      url: record.logo
     }] : [];
     
     showEditModal.value = true;
   }
 
-  // 删除产品
-  function handleDelete(record: ProductListData) {
+  // 删除计划
+  function handleDelete(record: PlanListData) {
     message.info('正在删除...');
-    goodsDel({ id: record.id }).then(() => {
-      message.success('删除成功');
-      reloadTable();
+    planDel(record.id).then((res:any) => {
+      if (res.code === 1) {
+        message.success('删除成功');
+        reloadTable();
+      } else {
+        message.error(res.msg || '删除失败');
+      }
     });
   }
 
