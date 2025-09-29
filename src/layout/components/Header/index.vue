@@ -423,7 +423,7 @@
       
       // 在组件挂载时启动定时器并添加交互监听
       onMounted(() => {
-        startTimers();
+       // startTimers();
         window.addEventListener("click",onClick)
         // 监听路由变化，重置提醒状态
         router.beforeEach((to) => {

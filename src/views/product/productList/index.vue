@@ -30,7 +30,7 @@
     </BasicTable>
 
     <!-- 编辑产品弹窗 -->
-    <n-modal v-model:show="showEditModal" :show-icon="false" preset="dialog" title="编辑产品">
+    <n-modal v-model:show="showEditModal" :show-icon="false" preset="dialog" title="编辑产品" style="width: 700px;">
       <n-form
         :model="formParams"
         :rules="rules"
@@ -39,121 +39,115 @@
         :label-width="120"
         class="py-4"
       >
-        <n-tabs v-model:value="activeTab" type="line" animated>
-          <!-- 中文标签页 -->
-          <n-tab-pane name="zh" tab="中文">
-            <n-form-item label="产品名称" path="name">
-              <n-input placeholder="请输入产品名称" v-model:value="formParams.name" />
-            </n-form-item>
-            <n-form-item label="产品名称缩写" path="a_name">
-              <n-input placeholder="请输入产品名称缩写" v-model:value="formParams.a_name" />
-            </n-form-item>
-            <n-form-item label="描述" path="intro">
-              <n-input
-                type="textarea"
-                placeholder="请输入描述"
-                v-model:value="formParams.intro"
-              />
-            </n-form-item>
-            <n-form-item label="图片" path="image">
-              <n-upload
-                :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
-                :default-file-list="fileList"
-                list-type="image-card"
-                :max="1"
-                :on-before-upload="handleBeforeUpload"
-                name="image"
-                :headers="{
-                  'Authorization': userStore.getToken
-                }"
-                @finish="handleUploadFinish"
-                @error="handleUploadError"
-                @remove="handleRemove"
-              >
-                上传图片
-              </n-upload>
-            </n-form-item>
-          </n-tab-pane>
-
-          <!-- 其他语言标签页 -->
-          <n-tab-pane v-for="lang in languageOptions" :key="lang.value" :name="lang.value" :tab="lang.label">
-            <n-form-item :label="`产品名称 (${lang.label})`" :path="`i18n.${lang.value}.name`">
-              <n-input :placeholder="`请输入${lang.label}产品名称`" v-model:value="formParams.i18n[lang.value].name" />
-            </n-form-item>
-            <n-form-item :label="`产品名称缩写 (${lang.label})`" :path="`i18n.${lang.value}.a_name`">
-              <n-input :placeholder="`请输入${lang.label}产品名称缩写`" v-model:value="formParams.i18n[lang.value].a_name" />
-            </n-form-item>
-            <n-form-item :label="`描述 (${lang.label})`" :path="`i18n.${lang.value}.intro`">
-              <n-input
-                type="textarea"
-                :placeholder="`请输入${lang.label}描述`"
-                v-model:value="formParams.i18n[lang.value].intro"
-              />
-            </n-form-item>
-            <n-form-item :label="`图片 (${lang.label})`" :path="`i18n.${lang.value}.image`">
-              <n-upload
-                :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
-                :default-file-list="i18nFileList[lang.value]"
-                list-type="image-card"
-                :max="1"
-                :on-before-upload="handleBeforeUpload"
-                name="image"
-                :headers="{
-                  'Authorization': userStore.getToken
-                }"
-                @finish="(options) => handleI18nUploadFinish(options, lang.value)"
-                @error="handleUploadError"
-                @remove="() => handleI18nRemove(lang.value)"
-              >
-                上传图片
-              </n-upload>
-            </n-form-item>
-          </n-tab-pane>
-        </n-tabs>
-        <n-form-item label="每期时间" path="period_time">
-          <n-input-number
-            v-model:value="formParams.period_time"
-            :min="1"
-            :max="1000"
-            placeholder="请输入每期时间"
-          />
-          <span class="text-[#666] ml-[10px]">秒</span>
+        <n-form-item label="产品名称" path="name">
+          <n-input placeholder="请输入产品名称" v-model:value="formParams.name" />
         </n-form-item>
-        <n-form-item label="封单时间" path="seal_time">
-          <n-input-number
-            v-model:value="formParams.seal_time"
-            :min="0"
-            :max="1000"
-            placeholder="请输入封单时间"
-          />
-          <span class="text-[#666] ml-[10px]">秒</span>
+        <n-form-item label="产品类型" path="type_name">
+          <n-input placeholder="请输入产品类型" v-model:value="formParams.type_name" />
         </n-form-item>
+        <n-form-item label="公司" path="company">
+          <n-input placeholder="请输入公司名称" v-model:value="formParams.company" />
+        </n-form-item>
+        <n-form-item label="简介" path="intro">
+          <n-input
+            type="textarea"
+            placeholder="请输入产品简介"
+            v-model:value="formParams.intro"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+          />
+        </n-form-item>
+        
+        <n-form-item label="Logo" path="logo">
+          <n-upload
+            :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
+            :default-file-list="logoFileList"
+            list-type="image-card"
+            :max="1"
+            :on-before-upload="(file) => handleBeforeUpload(file, 'logo')"
+            name="image"
+            :headers="{'Authorization': userStore.getToken}"
+            @finish="(e) => handleUploadFinish(e, 'logo')"
+            @error="handleUploadError"
+            @remove="() => handleRemove('logo')"
+          >
+            上传Logo
+          </n-upload>
+        </n-form-item>
+        
+        <n-form-item label="产品图片" path="image">
+          <n-upload
+            :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
+            :default-file-list="fileList"
+            list-type="image-card"
+            :max="1"
+            :on-before-upload="(file) => handleBeforeUpload(file, 'image')"
+            name="image"
+            :headers="{'Authorization': userStore.getToken}"
+            @finish="(e) => handleUploadFinish(e, 'image')"
+            @error="handleUploadError"
+            @remove="() => handleRemove('image')"
+          >
+            上传产品图片
+          </n-upload>
+        </n-form-item>
+        
+        <n-form-item label="谷歌商店链接" path="google_play">
+          <n-input placeholder="请输入谷歌商店链接" v-model:value="formParams.google_play" />
+        </n-form-item>
+        
+        <n-form-item label="苹果商店链接" path="app_store">
+          <n-input placeholder="请输入苹果商店链接" v-model:value="formParams.app_store" />
+        </n-form-item>
+        
+        <n-form-item label="应用信息" path="app_info">
+          <n-card>
+            <n-space vertical>
+              <n-button type="primary" @click="addAppInfo">
+                <template #icon>
+                  <n-icon><PlusOutlined /></n-icon>
+                </template>
+                添加信息
+              </n-button>
+              <n-data-table
+                :columns="appInfoColumns"
+                :data="formParams.app_info || []"
+                :pagination="false"
+                :bordered="true"
+              />
+            </n-space>
+          </n-card>
+        </n-form-item>
+        
         <n-form-item label="排序" path="sort">
           <n-input-number
             v-model:value="formParams.sort"
             :min="0"
-            :max="999"
             placeholder="请输入排序"
           />
         </n-form-item>
-        <n-form-item label="中奖赔率" path="multiple">
-          <n-input-number
-            v-model:value="formParams.multiple"
-            :min="0"
-            :step="0.1"
-            :precision="2"
-            placeholder="请输入中奖赔率，默认1.5"
+        
+        <n-form-item label="状态" path="state">
+          <n-select
+            v-model:value="formParams.state"
+            :options="[
+              { label: '未生效', value: 0 },
+              { label: '生效', value: 1 },
+              { label: '审核中', value: 2 },
+              { label: '封禁', value: 3 },
+            ]"
+            placeholder="请选择状态"
           />
         </n-form-item>
-
-        <n-form-item label="热门产品" path="is_hot">
+        
+        <!-- <n-form-item label="是否热门" path="is_hot">
           <n-switch v-model:value="formParams.is_hot" :checked-value="1" :unchecked-value="0" />
           <span class="text-[#666] ml-[10px]">是否设为热门产品</span>
         </n-form-item>
-        <n-form-item label="首页显示" path="is_home">
+        
+        <n-form-item label="是否首页显示" path="is_home">
           <n-switch v-model:value="formParams.is_home" :checked-value="1" :unchecked-value="0" />
           <span class="text-[#666] ml-[10px]">是否在首页显示</span>
-        </n-form-item>
+        </n-form-item> -->
       </n-form>
 
       <template #action>
@@ -177,12 +171,12 @@
   import { h, reactive, ref } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { columns, ProductListData } from './columns';
+  import { columns, ProductListData, stateOptions } from './columns';
   import { goodsList, goodsAdd, goodsEdit, goodsDel } from '@/api/goods';
   import { getAppEnvConfig } from '@/utils/env';
-  import { PlusOutlined } from '@vicons/antd';
+  import { PlusOutlined, DeleteOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
-  import { type FormRules, NButton, NTabs, NTabPane } from 'naive-ui';
+  import { type FormRules, NButton, NInput, NIcon } from 'naive-ui';
   import { useUser } from '@/store/modules/user';
   import type { UploadFileInfo } from 'naive-ui';
   const {
@@ -198,46 +192,75 @@
   const formBtnLoading = ref(false);
   // 文件上传状态
   const isUploading = ref(false);
-  const formParams = reactive({
+  const formParams:any = reactive({
     id: 0,
     name: '', // 中文名称
-    a_name: '', // 中文名称缩写
-    intro: '', // 中文描述
-    image: '', // 中文图片
-    period_time: '',
-    seal_time: '',
-    sort: 0,
-    multiple: 1.5, // 默认赔率1.5
-    is_hot: 0,
-    is_home: 0,
-    i18n: {
-      'en-us': { name: '', a_name: '', intro: '', image: '' },
-      'es-es': { name: '', a_name: '', intro: '', image: '' },
-      'ja-jp': { name: '', a_name: '', intro: '', image: '' },
-      'th-th': { name: '', a_name: '', intro: '', image: '' }
-    }
+    company: '', // 公司名称
+    type_name: '', // 产品类型
+    category: '', // 分类
+    intro: '', // 产品简介
+    logo: '', // Logo
+    image: '', // 产品图片
+    google_play: '', // 谷歌商店链接
+    app_store: '', // 苹果商店链接
+    app_info: [], // 应用信息
+    sort: 0, // 排序
+    state: 1, // 状态
+    is_hot: 0, // 是否热门
+    is_home: 0 // 是否首页显示
   });
 
-  // 中文图片文件列表
+  // 产品图片文件列表
   const fileList = ref<UploadFileInfo[]>([]);
+  // Logo图片文件列表
+  const logoFileList = ref<UploadFileInfo[]>([]);
   
-  // 多语言图片文件列表 
-  const i18nFileList = reactive({
-    en: [] as UploadFileInfo[],
-    es: [] as UploadFileInfo[],
-    ja: [] as UploadFileInfo[],
-    th: [] as UploadFileInfo[]
-  });
-
-  // 当前选中的语言标签
-  const activeTab = ref('zh');
-  
-  // 语言选项
-  const languageOptions = [
-    { label: '英文', value: 'en-us' },
-    { label: '西班牙语', value: 'es-es' },
-    { label: '日语', value: 'ja-jp' },
-    { label: '泰语', value: 'th-th' }
+  // 应用信息表格列定义
+  const appInfoColumns = [
+    {
+      title: '标题',
+      key: 'title',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.title,
+          onUpdateValue: (v) => {
+            if (!formParams.app_info) formParams.app_info = [];
+            formParams.app_info[index].title = v;
+          },
+          placeholder: '请输入标题'
+        });
+      }
+    },
+    {
+      title: '内容',
+      key: 'content',
+      render: (row, index) => {
+        return h(NInput, {
+          value: row.content,
+          onUpdateValue: (v) => {
+            if (!formParams.app_info) formParams.app_info = [];
+            formParams.app_info[index].content = v;
+          },
+          placeholder: '请输入内容'
+        });
+      }
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 100,
+      render: (row, index) => {
+        return h('div', { class: 'flex space-x-2' },
+          h(NButton, {
+            text: true,
+            type: 'error',
+            onClick: () => removeAppInfo(index)
+          }, {
+            icon: () => h(NIcon, null, { default: () => h(DeleteOutlined) })
+          })
+        );
+      }
+    }
   ];
 
   // 表单验证规则
@@ -247,27 +270,30 @@
       trigger: ['blur', 'input'],
       message: '请输入产品名称',
     },
-    a_name: {
+    company: {
       required: true,
       trigger: ['blur', 'input'],
-      message: '请输入产品名称缩写',
+      message: '请输入公司名称',
+    },
+    type_name: {
+      required: true,
+      trigger: ['blur', 'input'],
+      message: '请输入产品类型名称',
     },
     intro: {
       required: true,
       trigger: ['blur', 'input'],
-      message: '请输入描述',
+      message: '请输入产品简介',
     },
-    period_time: {
+    logo: {
       required: true,
-      type:'number',
       trigger: ['blur', 'change'],
-      message: '请输入每期时间',
+      message: '请上传Logo',
     },
-    seal_time: {
+    image: {
       required: true,
-      type:'number',
       trigger: ['blur', 'change'],
-      message: '请输入封单时间',
+      message: '请上传产品图片',
     },
     sort: {
       required: false,
@@ -275,27 +301,25 @@
       trigger: ['blur', 'change'],
       message: '请输入排序',
     },
-    image: {
-      required: false,
-      trigger: ['blur', 'change'],
-      message: '请上传图片',
-    },
-    multiple: {
-      required: false,
-      type: 'number',
-      trigger: ['blur', 'change'],
-      message: '请输入中奖赔率',
-    },
   };
 
   // 搜索表单配置
   const schemas: FormSchema[] = [
     {
-      field: 'name',
+      field: 'id',
       component: 'NInput',
-      label: '产品名称',
+      label: '产品ID',
       componentProps: {
-        placeholder: '请输入产品名称',
+        placeholder: '',
+      },
+    },
+    {
+      field: 'state',
+      component: 'NSelect',
+      label: '状态',
+      componentProps: {
+        placeholder: '请选择',
+        options: stateOptions,
       },
     }
   ];
@@ -318,15 +342,25 @@
           {
             label: '删除',
             type:'error',
-            popConfirm: {
-              title: '确定删除吗？',
-              confirm: handleDelete.bind(null, record),
-            },
+            onClick: (e) => {
+              e.stopPropagation();
+              window.$dialog.warning({
+                title: '确定删除吗？',
+                content: '删除后将无法恢复',
+                positiveText: '确定',
+                negativeText: '取消',
+                onPositiveClick: () => {
+                  handleDelete(record);
+                }
+              });
+            }
           },
         ],
       });
     },
   });
+
+  const searchForm = ref({})
 
   const [register] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
@@ -340,41 +374,34 @@
     Object.assign(formParams, {
       id: 0,
       name: '',
-      a_name: '',
+      company: '',
+      type_name: '',
+      category: '',
       intro: '',
-      period_time: '',
-      seal_time: '',
-      sort: 0,
+      logo: '',
       image: '',
+      google_play: '',
+      app_store: '',
+      app_info: [],
+      sort: 0,
+      state: 1, // 默认生效
       is_hot: 0,
-      is_home: 0,
-      multiple: 1.5, // 默认赔率
-      // 初始化多语言数据
-      i18n: {
-        'en-us': { name: '', a_name: '', intro: '', image: '' },
-        'es-es': { name: '', a_name: '', intro: '', image: '' },
-        'ja-jp': { name: '', a_name: '', intro: '', image: '' },
-        'th-th': { name: '', a_name: '', intro: '', image: '' }
-      }
+      is_home: 0
     });
     
     // 重置所有文件列表
     fileList.value = [];
-    Object.keys(i18nFileList).forEach(lang => {
-      i18nFileList[lang] = [];
-    });
+    logoFileList.value = [];
     
-    // 默认选中中文选项卡
-    activeTab.value = 'zh';
     showEditModal.value = true;
   }
 
   // 加载表格数据
-  async function loadDataTable({ page, pageSize, ...rest }) {
+  async function loadDataTable({ page, pageSize }) {
     const params = {
       page: String(page),
       pageSize: String(pageSize),
-      ...rest,
+      ...searchForm.value,
     };
     try {
       const res:any = await goodsList(params)
@@ -407,7 +434,7 @@
   }
 
   // 处理文件上传前的验证
-  const handleBeforeUpload = (data: { file: UploadFileInfo }) => {
+  const handleBeforeUpload = (data: { file: UploadFileInfo }, type: 'image' | 'logo' = 'image') => {
     const { file } = data;
     if (!file.file) return false;
     
@@ -428,8 +455,8 @@
     return true;
   };
 
-  // 处理上传完成 (中文)
-  const handleUploadFinish = (options: any) => {
+  // 处理上传完成
+  const handleUploadFinish = (options: any, type: 'image' | 'logo' = 'image') => {
     const { file, event } = options;
     
     try {
@@ -437,23 +464,25 @@
       if (response.code === 1) {
         // 更新文件状态和URL
         file.url = response.data.url;
-        formParams.image = response.data.url;
+        formParams[type] = response.data.url;
         message.success('上传成功');
       } else {
         message.error('上传失败: ' + response.msg || '未知错误');
         // 删除上传失败的文件
-        const index = fileList.value.findIndex(f => f.id === file.id);
+        const fileListRef = type === 'image' ? fileList : logoFileList;
+        const index = fileListRef.value.findIndex(f => f.id === file.id);
         if (index !== -1) {
-          fileList.value.splice(index, 1);
+          fileListRef.value.splice(index, 1);
         }
       }
     } catch (error) {
       console.error('上传响应解析错误:', error);
       message.error('上传失败');
       // 删除上传失败的文件
-      const index = fileList.value.findIndex(f => f.id === file.id);
+      const fileListRef = type === 'image' ? fileList : logoFileList;
+      const index = fileListRef.value.findIndex(f => f.id === file.id);
       if (index !== -1) {
-        fileList.value.splice(index, 1);
+        fileListRef.value.splice(index, 1);
       }
     } finally {
       // 无论成功还是失败，重置上传状态
@@ -461,201 +490,143 @@
     }
   };
   
-  // 处理多语言上传完成
-  const handleI18nUploadFinish = (options: any, lang: string) => {
-    const { file, event } = options;
-    
-    try {
-      const response = JSON.parse(event.target.response);
-      if (response.code === 1) {
-        // 更新文件状态和URL
-        file.url = response.data.url;
-        formParams.i18n[lang].image = response.data.url;
-        message.success('上传成功');
-      } else {
-        message.error('上传失败: ' + response.msg || '未知错误');
-        // 删除上传失败的文件
-        const index = i18nFileList[lang].findIndex(f => f.id === file.id);
-        if (index !== -1) {
-          i18nFileList[lang].splice(index, 1);
-        }
-      }
-    } catch (error) {
-      console.error('上传响应解析错误:', error);
-      message.error('上传失败');
-      // 删除上传失败的文件
-      const index = i18nFileList[lang].findIndex(f => f.id === file.id);
-      if (index !== -1) {
-        i18nFileList[lang].splice(index, 1);
-      }
-    } finally {
-      // 无论成功还是失败，重置上传状态
-      isUploading.value = false;
-    }
-  };
-
-  // 处理文件移除 (中文)
-  const handleRemove = () => {
-    // 清空对应的value值
-    formParams.image = '';
-    return true;
-  };
-
-  // 处理多语言文件移除
-  const handleI18nRemove = (lang: string) => {
-    // 清空对应语言的图片值
-    formParams.i18n[lang].image = '';
-    return true;
-  };
-
   // 处理上传错误
   const handleUploadError = () => {
-    message.error('上传遇到网络错误');
-    // 重置上传状态
+    message.error('上传失败');
     isUploading.value = false;
   };
-
-  // 确认编辑/新增表单
-  function confirmEditForm() {
-    // 检查是否是表单验证错误
-    const chineseFields = ['name', 'a_name', 'intro'];
-    
-    for (const field of chineseFields) {
-      if (!formParams[field]) {
-        activeTab.value = 'zh';
-        break;
-      }
+  
+  // 处理删除
+  const handleRemove = (type: 'image' | 'logo' = 'image') => {
+    formParams[type] = '';
+    if (type === 'image') {
+      fileList.value = [];
+    } else {
+      logoFileList.value = [];
     }
+  };
+
+  // 添加应用信息
+  const addAppInfo = () => {
+    if (!formParams.app_info) formParams.app_info = [];
+    formParams.app_info.push({ title: '', content: '' });
+  };
+  
+  // 删除应用信息
+  const removeAppInfo = (index) => {
+    formParams.app_info.splice(index, 1);
+  };
+
+  // 确认编辑表单
+  async function confirmEditForm(e: MouseEvent) {
+    e.preventDefault();
+    formBtnLoading.value = true;
     
     setTimeout(async ()=>{
       try {
         // 表单验证
         await formRef.value?.validate();
-        formBtnLoading.value = true;
         
-        // 构建提交数据
-        const payload = {
-          id: formParams.id || undefined,
-          // 保留中文作为主要字段
+        // 准备提交的数据
+        const submitData = {
+          id: formParams.id,
           name: formParams.name,
-          a_name: formParams.a_name,
+          company: formParams.company,
+          type_name: formParams.type_name,
+          category: formParams.category,
           intro: formParams.intro,
+          logo: formParams.logo,
           image: formParams.image,
-          period_time: formParams.period_time,
-          seal_time: formParams.seal_time,
+          google_play: formParams.google_play,
+          app_store: formParams.app_store,
+          app_info: JSON.stringify(formParams.app_info || []),
           sort: formParams.sort,
-          multiple: formParams.multiple,
+          state: formParams.state,
           is_hot: formParams.is_hot,
-          is_home: formParams.is_home,
-          // 其他语言放在i18n字段中
-          i18n: formParams.i18n,
+          is_home: formParams.is_home
         };
         
-        // 提交请求
+        // 发送请求
         if (formParams.id) {
-          const res:any = await goodsEdit(payload);
-          if(res.code == 1){
-            message.success('编辑成功');
+          // 编辑
+          const res:any = await goodsEdit(submitData);
+          if (res.code === 1) {
+            message.success('修改成功');
             showEditModal.value = false;
             reloadTable();
-          }else{
-            message.error(res.msg || '编辑失败');
+          } else {
+            message.error(res.msg || '修改失败');
           }
         } else {
-          const res2:any = await goodsAdd(payload);
-          if(res2.code == 1){
-            message.success('新增成功');
+          // 新增
+          const res:any = await goodsAdd(submitData);
+          if (res.code === 1) {
+            message.success('添加成功');
             showEditModal.value = false;
             reloadTable();
-          }else{
-            message.error(res2.msg || '新增失败');
+          } else {
+            message.error(res.msg || '添加失败');
           }
         }
+      } catch (error) {
+        console.error('表单提交错误:', error);
+        message.error('表单验证失败，请检查输入');
       } finally {
         formBtnLoading.value = false;
       }
-    })
+    }, 0);
   }
 
   // 编辑产品
-  function handleEdit(record: ProductListData) {
-    // 重置 formParams 中的基本字段
+  function handleEdit(record: Recordable) {
+    let appInfo = []
+    try {
+      appInfo = JSON.parse(record.app_info);
+    } catch (error) {
+      console.error('解析app_info失败:', error);
+    }
+    // 重置表单
     Object.assign(formParams, {
       id: record.id,
-      // 中文字段
-      name: record.name || '',
-      a_name: record.a_name || '',
+      name: record.name,
+      company: record.company || '',
+      type_name: record.type_name || '',
+      category: record.category || '',
       intro: record.intro || '',
+      logo: record.logo || '',
       image: record.image || '',
-      period_time: record.period_time > 0 ? Number(record.period_time) : 0,
-      seal_time: record.seal_time && record.seal_time > 0 ? Number(record.seal_time) : 0,
-      sort:  record.sort > 0 ? Number(record.sort) : 0,
-      multiple: record.multiple ? Number(record.multiple) : 1.5, // 获取中奖赔率，如果为空则使用默认值1.5
-      is_hot: record.is_hot,
-      is_home: record.is_home,
+      google_play: record.google_play || '',
+      app_store: record.app_store || '',
+      app_info: appInfo,
+      sort: record.sort || 0,
+      state: record.state !== undefined ? record.state : 1,
+      is_hot: record.is_hot || 0,
+      is_home: record.is_home || 0
     });
     
-    // 处理多语言数据 - 确保即使 i18n 为空也能正常工作
-    let i18nData = {};
+    // 设置产品图片
+    fileList.value = record.image ? [{
+      id: '1',
+      name: '产品图片',
+      status: 'finished',
+      url: record.image
+    }] : [];
     
-    // 处理record.i18n是字符串的情况
-    if (record.i18n && typeof record.i18n === 'string') {
-      try {
-        i18nData = JSON.parse(record.i18n);
-      } catch (e) {
-        console.error('解析i18n JSON失败:', e);
-        i18nData = {};
-      }
-    } else if (record.i18n && typeof record.i18n === 'object') {
-      i18nData = record.i18n;
-    }
+    // 设置Logo图片
+    logoFileList.value = record.logo ? [{
+      id: '2',
+      name: 'Logo',
+      status: 'finished',
+      url: record.logo
+    }] : [];
     
-    // 初始化所有语言的默认结构
-    formParams.i18n = {
-      'en-us': { name: '', a_name: '', intro: '', image: '' },
-      'es-es': { name: '', a_name: '', intro: '', image: '' },
-      'ja-jp': { name: '', a_name: '', intro: '', image: '' },
-      'th-th': { name: '', a_name: '', intro: '', image: '' }
-    };
-    
-    // 如果有有效的i18n数据，合并到默认结构中
-    if (Object.keys(i18nData).length > 0) {
-      Object.keys(formParams.i18n).forEach(lang => {
-        if (i18nData[lang]) {
-          formParams.i18n[lang] = {
-            name: i18nData[lang].name || '',
-            a_name: i18nData[lang].a_name || '',
-            intro: i18nData[lang].intro || '',
-            image: i18nData[lang].image || ''
-          };
-        }
-      });
-    }
-    
-    // 设置中文图片文件列表
-    fileList.value = record.image ? [{ id: `zh-${Date.now()}`, url: record.image, status: 'finished', name: '图片' }] : [];
-    
-    // 设置其他语言的图片文件列表 - 修复图片不显示问题
-    Object.keys(i18nFileList).forEach(lang => {
-      const langImage = formParams.i18n[lang]?.image;
-      if (langImage) {
-        i18nFileList[lang] = [{ 
-          id: `${lang}-${Date.now()}`,
-          url: langImage, 
-          status: 'finished', 
-          name: `${lang}图片` 
-        }];
-      } else {
-        i18nFileList[lang] = [];
-      }
-    });
     showEditModal.value = true;
   }
 
   // 删除产品
   function handleDelete(record: ProductListData) {
     message.info('正在删除...');
-    goodsDel({ id: String(record.id) }).then(() => {
+    goodsDel({ id: record.id }).then(() => {
       message.success('删除成功');
       reloadTable();
     });
@@ -663,7 +634,7 @@
 
   // 搜索
   function handleSubmit(values) {
-    console.log(values);
+    searchForm.value = values;
     reloadTable();
   }
 
