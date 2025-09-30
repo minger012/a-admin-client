@@ -16,7 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/data',
     name: 'Data',
-    redirect: '/data/employeeStats',
+    redirect: '/data/registerStats',
     component: Layout,
     meta: {
       title: '数据统计',
@@ -25,22 +25,22 @@ const routes: Array<RouteRecordRaw> = [
     },
     children: [
       {
-        path: 'employeeStats',
-        name: 'EmployeeStats',
+        path: 'registerStats',
+        name: 'RegisterStats',
         meta: {
           title: '注册统计',
           permissions:['*','901'],
         },
-        component: () => import('@/views/data/employeeStats/index.vue'),
+        component: () => import('@/views/data/registerStats/index.vue'),
       },
       {
-        path: 'teamStats',
-        name: 'TeamStats',
+        path: 'rechargeWithdrawStats',
+        name: 'RechargeWithdrawStats',
         meta: {
           title: '充值提现统计',
           permissions:['*','902'],
         },
-        component: () => import('@/views/data/teamStats/index.vue'),
+        component: () => import('@/views/data/rechargeWithdrawStats/index.vue'),
       },
     ],
   },
