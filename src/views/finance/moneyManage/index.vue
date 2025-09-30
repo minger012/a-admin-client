@@ -1,276 +1,295 @@
 <template>
-  <div>
-    <n-card :bordered="false" class="proCard" title="会员加扣款">
-      <n-grid :cols="1" :x-gap="12">
-        <n-gi>
-          <n-card :segmented="{ content: true }" :bordered="false" size="small">
-            <template #header>
-              <n-space>
-                <n-input
-                  v-model:value="searchForm.username"
-                  placeholder="请输入会员账号"
-                  @keydown.enter="handleSearch"
-                />
-                <n-button type="primary" @click="handleSearch" :loading="searchLoading">
-                  搜索
-                </n-button>
-                <n-button @click="resetSearch">重置</n-button>
-              </n-space>
-            </template>
+  <n-card :bordered="false" class="proCard">
+    <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset">
+      <template #statusSlot="{ model, field }">
+        <n-select v-model:value="model[field]" :options="typeOptions" />
+      </template>
+      <template #chaSlot="{ model, field }">
+        <n-select v-model:value="model[field]" :options="chaOptions" />
+      </template>
+    </BasicForm>
 
-            <div v-if="memberInfo.username">
-              <n-form
-                :model="formValue"
-                :rules="rules"
-                ref="formRef"
-                label-placement="left"
-                :label-width="100"
-                class="py-4"
-              >
-                <n-form-item label="会员账号">
-                  {{memberInfo.username}}
-                </n-form-item>
-                <n-form-item label="会员姓名">
-                  {{memberInfo.name}}
-                </n-form-item>
-                <n-form-item label="账号余额">
-                  <span class="text-red-500"> {{memberInfo.balance}}</span>
-                </n-form-item>
-                <n-form-item label="操作类型" path="type">
-                  <n-radio-group v-model:value="formValue.type" name="type">
-                    <n-space>
-                      <n-radio value="add">人工加款</n-radio>
-                      <n-radio value="sub">人工扣款</n-radio>
-                    </n-space>
-                  </n-radio-group>
-                </n-form-item>
-                <n-form-item label="金额" path="money">
-                  <n-input-number
-                    v-model:value="formValue.money"
-                    :min="0"
-                    :precision="2"
-                    clearable
-                    placeholder="请输入金额"
-                  />
-                </n-form-item>
-                <n-form-item>
-                  <n-button type="primary" class="ml-[100px]" @click="handleSubmit" :loading="submitLoading">
-                    确认提交
-                  </n-button>
-                </n-form-item>
-              </n-form>
-            </div>
-            <n-empty v-else description="请先搜索会员账号" />
-          </n-card>
-        </n-gi>
-      </n-grid>
-    </n-card>
-  </div>
+    <BasicTable
+      :columns="columns"
+      :request="loadDataTable"
+      :row-key="(row:FlowListData) => row.id"
+      ref="actionRef"
+      :scroll-x="1800"
+      :striped="true"
+    >
+      <template #tableTitle>
+        <n-space>
+          <n-button type="primary" @click="exportData" v-if="false">
+            <template #icon>
+              <n-icon>
+                <DownloadOutlined />
+              </n-icon>
+            </template>
+            导出数据
+          </n-button>
+        </n-space>
+      </template>
+    </BasicTable>
+
+    <!-- 编辑备注弹窗 -->
+    <n-modal v-model:show="showEditModal" :show-icon="false" preset="dialog" title="编辑备注" style="width: 500px;">
+      <n-form
+        :model="formParams"
+        :rules="rules"
+        ref="formRef"
+        label-placement="left"
+        :label-width="80"
+        class="py-4"
+      >
+        <n-form-item label="备注" path="remarks">
+          <n-input
+            type="textarea"
+            placeholder="请输入备注"
+            v-model:value="formParams.remarks"
+            :autosize="{ minRows: 3, maxRows: 5 }"
+          />
+        </n-form-item>
+      </n-form>
+
+      <template #action>
+        <n-space>
+          <n-button @click="() => (showEditModal = false)">取消</n-button>
+          <n-button 
+            type="info" 
+            :loading="formBtnLoading" 
+            @click="confirmEditForm"
+          >
+            确定
+          </n-button>
+        </n-space>
+      </template>
+    </n-modal>
+  </n-card>
 </template>
 
 <script lang="ts" setup>
-  import { onMounted, reactive, ref } from 'vue';
-  import { useMessage, FormInst } from 'naive-ui';
-  import { getUserList } from '@/api/system/user';
-  import { userMoneyAdd, userMoneySub } from '@/api/system/money';
-  import { useUser } from '@/store/modules/user';
+  import { reactive, ref } from 'vue';
+  import { BasicTable } from '@/components/Table';
+  import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
+  import { columns, FlowListData, typeOptions, chaOptions } from './columns';
+  import { flowList, flowEdit } from '@/api/member/flow';
+  import { DownloadOutlined } from '@vicons/antd';
+  import { useMessage } from 'naive-ui';
+  import { type FormRules } from 'naive-ui';
 
   const message = useMessage();
-  const userStore = useUser();
-  const formRef = ref<FormInst | null>(null);
+  const actionRef = ref();
+  const formRef = ref();
+  const showEditModal = ref(false);
+  const formBtnLoading = ref(false);
 
-  const searchLoading = ref(false);
-  const submitLoading = ref(false);
+  interface SearchFormType {
+    uid?: string | number;
+    username?: string;
+    admin_username?: string;
+    fb_id?: string | number;
+    cha?: number | string;
+    order_no?: string | number;
+    type?: number | string;
+    timeRange?: [number, number];
+  }
+  
+  const searchForm = ref<SearchFormType>({});
 
-  // 会员信息
-  const memberInfo = reactive({
+  // 表单参数
+  const formParams = reactive({
     id: 0,
-    username: '',
-    name: '',
-    balance: 0,
+    remarks: '',
   });
 
-  // 搜索表单
-  const searchForm = reactive({
-    username: '',
-  });
-
-  // 操作表单
-  const formValue = reactive<{type: string, money: number | undefined}>({
-    type: 'add', // 默认加款
-    money: undefined, // 金额
-  });
-
-  // 表单规则
-  const rules = {
-    type: {
+  // 表单验证规则
+  const rules: FormRules = {
+    remarks: {
       required: true,
-      trigger: ['blur', 'change'],
-      message: '请选择操作类型',
+      message: '请输入备注',
+      trigger: ['blur', 'input'],
     },
-    money: {
-      required: true,
-      trigger: ['blur', 'change'],
-      validator: (_rule, value) => {
-        if (!value) {
-          return new Error('请输入金额');
-        }
-        if (value <= 0) {
-          return new Error('金额必须大于0');
-        }
-        return true;
+  };
+
+  // 搜索表单配置
+  const schemas: FormSchema[] = [
+    {
+      field: 'uid',
+      component: 'NInput',
+      label: '用户ID',
+      componentProps: {
+        placeholder: '请输入用户ID',
       },
     },
-  };
+    {
+      field: 'username',
+      component: 'NInput',
+      label: '用户简称',
+      componentProps: {
+        placeholder: '请输入用户简称',
+      },
+    },
+    {
+      field: 'fb_id',
+      component: 'NInput',
+      label: 'FB_ID',
+      componentProps: {
+        placeholder: '请输入FB_ID',
+      },
+    },
+    {
+      field: 'admin_username',
+      component: 'NInput',
+      label: '所属管理者',
+      componentProps: {
+        placeholder: '请输入所属管理者',
+      },
+    },
+    {
+      field: 'type',
+      component: 'NSelect',
+      label: '交易类型',
+      componentProps: {
+        placeholder: '请选择交易类型',
+        options: typeOptions,
+        clearable: true,
+      },
+      slot: 'statusSlot',
+    },
+    {
+      field: 'cha',
+      component: 'NSelect',
+      label: '资金方向',
+      componentProps: {
+        placeholder: '请选择资金方向',
+        options: chaOptions,
+        clearable: true,
+      },
+      slot: 'chaSlot',
+    },
+    {
+      field: 'order_no',
+      component: 'NInput',
+      label: '计划订单编号',
+      componentProps: {
+        placeholder: '请输入计划订单编号',
+      },
+    },
+    {
+      field: 'timeRange',
+      component: 'NDatePicker',
+      label: '创建时间',
+      componentProps: {
+        type: 'daterange',
+        clearable: true,
+        shortcuts: {
+          '一周内': [Date.now() - 7 * 24 * 60 * 60 * 1000, Date.now()],
+          '一个月内': [Date.now() - 30 * 24 * 60 * 60 * 1000, Date.now()],
+          '三个月内': [Date.now() - 90 * 24 * 60 * 60 * 1000, Date.now()],
+        },
+      },
+    },
+  ];
 
-  // 缓存搜索表单数据
-  const cacheSearchForm = (username: string) => {
-    if (username) {
-      const adminName = userStore.info.username || 'unknown';
-      const cacheKey = `moneyManage_search_${adminName}`;
-      localStorage.setItem(cacheKey, username);
-    }
-  };
+  const [register] = useForm({
+    gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
+    labelWidth: 120,
+    schemas,
+  });
 
-  // 获取缓存的搜索表单数据
-  const getCachedSearchForm = () => {
-    const adminName = userStore.info.username || 'unknown';
-    const cacheKey = `moneyManage_search_${adminName}`;
-    return localStorage.getItem(cacheKey) || '';
-  };
-
-  // 清除缓存的搜索表单数据
-  const clearCachedSearchForm = () => {
-    const adminName = userStore.info.username || 'unknown';
-    const cacheKey = `moneyManage_search_${adminName}`;
-    localStorage.removeItem(cacheKey);
-  };
-
-  // 搜索会员信息
-  const handleSearch = async () => {
-    if (!searchForm.username) {
-      message.warning('请输入会员账号');
-      return;
+  // 加载表格数据
+  async function loadDataTable({ page, pageSize }) {
+    const params:any = {
+      page: String(page),
+      pageSize: String(pageSize),
+      ...searchForm.value,
+    };
+    
+    // 处理时间范围
+    if (params.timeRange && params.timeRange.length === 2) {
+      params.sTime = Math.floor(params.timeRange[0] / 1000);
+      params.eTime = Math.floor(params.timeRange[1] / 1000);
+      delete params.timeRange;
     }
     
-    // 缓存当前搜索条件
-    cacheSearchForm(searchForm.username);
-
     try {
-      searchLoading.value = true;
-      // 使用getUserList接口进行查询
-      const res:any = await getUserList({
-        username: searchForm.username,
+      const res:any = await flowList(params)
+      const responseData = res.data;
+      
+      return {
+        list: responseData.list || [],
+        page: Number(responseData.page) || 1,
+        pageCount: Number(responseData.total_page) || 0,
+        pageSize: Number(responseData.page_size) || 10,
+        itemCount: Number(responseData.total) || 0,
+      }
+    } catch (error) {
+      message.error('获取资金明细列表失败');
+      return {
+        list: [],
         page: 1,
-        pageSize: 10
+        pageCount: 0,
+        pageSize: 10,
+        itemCount: 0,
+      };
+    }
+  }
+
+  function reloadTable() {
+    actionRef.value.reload();
+  }
+
+  // 编辑备注
+  function handleEdit(record: FlowListData) {
+    formParams.id = record.id;
+    formParams.remarks = record.remarks || '';
+    showEditModal.value = true;
+  }
+
+  // 确认编辑备注
+  async function confirmEditForm() {
+    formBtnLoading.value = true;
+    
+    try {
+      // 表单验证
+      await formRef.value?.validate();
+      
+      // 发送请求
+      const res:any = await flowEdit({
+        id: formParams.id,
+        remarks: formParams.remarks,
       });
       
       if (res.code === 1) {
-        // 在返回的列表中查找是否有username完全相等的会员
-        const matchedMember = res.data.list.find(item => item.username.toLowerCase() === searchForm.username.toLowerCase());
-        
-        if (matchedMember) {
-          // 找到会员，更新会员信息
-          Object.assign(memberInfo, {
-            id: matchedMember.id,
-            username: matchedMember.username,
-            name: matchedMember.name,
-            balance: Number(matchedMember.money || '0'),
-          });
-          message.success('会员信息获取成功');
-        } else {
-          // 未找到完全匹配的会员
-          resetMemberInfo();
-          message.error('未找到该会员');
-        }
+        message.success('修改成功');
+        showEditModal.value = false;
+        reloadTable();
       } else {
-        resetMemberInfo();
-        message.error(res.msg || '会员信息获取失败');
+        message.error(res.msg || '修改失败');
       }
     } catch (error) {
-      resetMemberInfo();
-      message.error('会员信息获取出错，请稍后重试');
-      console.error('获取会员信息错误:', error);
+      console.error('表单提交错误:', error);
+      message.error('表单验证失败，请检查输入');
     } finally {
-      searchLoading.value = false;
+      formBtnLoading.value = false;
     }
-  };
-  
-  // 重置会员信息
-  const resetMemberInfo = () => {
-    Object.assign(memberInfo, {
-      id: 0,
-      username: '',
-      balance: 0,
-    });
-  };
+  }
 
-  // 重置搜索
-  const resetSearch = () => {
-    searchForm.username = '';
-    resetMemberInfo();
-    formValue.money = undefined;
-    formValue.type = 'add';
-    // 清除缓存
-    clearCachedSearchForm();
-  };
+  // 导出数据
+  function exportData() {
+    message.info('导出功能开发中...');
+  }
 
-  // 提交表单
-  const handleSubmit = async () => {
-    if (!memberInfo.username) {
-      message.warning('请先搜索会员信息');
-      return;
-    }
+  // 搜索
+  function handleSubmit(values) {
+    searchForm.value = values;
+    reloadTable();
+  }
 
-    formRef.value?.validate(async (errors) => {
-      if (!errors) {
-        try {
-          const money = Number(formValue.money || '0');
-          submitLoading.value = true;
-          const params = {
-            username: memberInfo.username,
-            money: money,
-            type: 1,
-          };
-
-          let res;
-          if (formValue.type === 'add') {
-            res = await userMoneyAdd(params);
-          } else {
-            res = await userMoneySub(params);
-          }
-
-          if (res.code === 1) {
-            message.success('操作成功');
-            // 更新当前的余额数值
-            if (formValue.type === 'add') {
-              memberInfo.balance += money;
-            } else {
-              memberInfo.balance = Math.max(0, memberInfo.balance - money);
-            }
-            // 重置表单值
-            formValue.money = undefined;
-          } else {
-            message.error(res.msg || '操作失败');
-          }
-        } catch (error) {
-          message.error('操作出错，请稍后重试');
-          console.error('提交表单错误:', error);
-        } finally {
-          submitLoading.value = false;
-        }
-      }
-    });
-  };
-  onMounted(() => {
-    // 从缓存中获取上次的搜索条件
-    const cachedUsername = getCachedSearchForm();
-    if (cachedUsername) {
-      searchForm.username = cachedUsername;
-      // 自动执行搜索
-      handleSearch();
-    }
-  });
+  // 重置
+  function handleReset() {
+    reloadTable();
+  }
 </script>
 
-<style scoped></style>
+<style lang="less" scoped></style>

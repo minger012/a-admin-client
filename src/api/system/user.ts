@@ -46,7 +46,7 @@ export function logout(params) {
  * @description: 获取会员列表
  */
 export function getUserList(params) {
-  return Alova.Post('/admin/user/userList', params,{
+  return Alova.Post('/admin/user/list', params,{
     meta: {
       isReturnNativeResponse: true,
     },
@@ -79,29 +79,73 @@ export function forceLogout(params) {
  * @description: 编辑会员信息
  */
 export function editUser(params) {
-  return Alova.Post('/admin/user/userEdit', params, {
+  return Alova.Post('/admin/user/edit', params, {
     meta: {
       isReturnNativeResponse: true,
     },
   });
 }
+
 /**
- * @description: 修改会员密码
+ * @description: 修改登录密码
  */
 export function editUserPwd(params) {
-  return Alova.Post('/admin/user/userPwdEdit', params, {
+  return Alova.Post('/admin/user/pwdEdit', params, {
     meta: {
       isReturnNativeResponse: true,
     },
   });
 }
 
+/**
+ * @description: 修改支付密码
+ */
+export function editUserPayPwd(params) {
+  return Alova.Post('/admin/user/payPwdEdit', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
 
 /**
- * @description: 新增会员信息
+ * @description: 修改提现方式
  */
-export function addUser(params) {
-  return Alova.Post('/admin/user/userAdd', params, {
+export function editUserBank(params) {
+  return Alova.Post('/admin/user/bankEdit', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
+
+/**
+ * @description: 用户充值
+ */
+export function userRecharge(params) {
+  return Alova.Post('/admin/user/recharge', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
+
+/**
+ * @description: 用户扣款
+ */
+export function userMoneySub(params) {
+  return Alova.Post('/admin/user/userMoneySub', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
+
+/**
+ * @description: 发优惠券
+ */
+export function userAddCoupon(params) {
+  return Alova.Post('/admin/user/addCoupon', params, {
     meta: {
       isReturnNativeResponse: true,
     },
