@@ -24,6 +24,7 @@ const routes: Array<RouteRecordRaw> = [
       icon: ProjectOutlined,
       sort: 3,
       permissions: ['*', '3'],
+      alwaysShow: true,
     },
     children: [
       {

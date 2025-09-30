@@ -11,6 +11,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '用户反馈',
       sort: 11,
       permissions:['*','11'],
+      alwaysShow: true,
     },
     children: [
       {

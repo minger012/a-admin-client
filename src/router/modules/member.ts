@@ -22,6 +22,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '用户管理',
       permissions:['*','10'],
       sort: 10,
+      alwaysShow: true,
     },
     children: [
       {
@@ -32,16 +33,7 @@ const routes: Array<RouteRecordRaw> = [
           permissions:['*','1001'],
         },
         component: () => import('@/views/member/memberList/index.vue'),
-      },
-      {
-        path: 'onlineUser',
-        name: 'onlineUser',
-        meta: {
-          title: '在线用户',
-          permissions:['*','1002'],
-        },
-        component: () => import('@/views/member/onlineUser/index.vue'),
-      },
+      }
     ],
   },
 ];

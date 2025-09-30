@@ -1,6 +1,6 @@
 import { RouteRecordRaw } from 'vue-router';
 import { Layout } from '@/router/constant';
-import { KeyOutlined } from '@vicons/antd';
+import { UnorderedListOutlined } from '@vicons/antd';
 
 /**
  * @param name 路由名称, 必须设置,且不能重名
@@ -15,26 +15,26 @@ import { KeyOutlined } from '@vicons/antd';
  * */
 const routes: Array<RouteRecordRaw> = [
   {
-    path: '/code',
-    name: 'Code',
-    redirect: '/code/codeList',
+    path: '/userPlan',
+    name: 'UserPlan',
+    redirect: '/userPlan/planList',
     component: Layout,
     meta: {
-      title: '授权码',
-      icon: KeyOutlined,
-      sort: 5,
-      permissions: ['*', '5'],
+      title: '用户计划管理',
+      icon: UnorderedListOutlined,
+      sort: 7,
+      permissions: ['*', '7'],
       alwaysShow: true,
     },
     children: [
       {
-        path: 'codeList',
-        name: 'CodeList',
+        path: 'planList',
+        name: 'UserPlanList',
         meta: {
-          title: '授权码管理',
-          permissions: ['*', '501'],
+          title: '用户计划列表',
+          permissions: ['*', '701'],
         },
-        component: () => import('@/views/code/codeList/index.vue'),
+        component: () => import('@/views/userPlan/planList/index.vue'),
       },
     ],
   },

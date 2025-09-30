@@ -53,27 +53,6 @@ export function getUserList(params) {
   });
 }
 
-/**
- * @description: 获取在线会员列表
- */
-export function getOnlineUserList(params) {
-  return Alova.Post('/admin/user/onlineUserList', params,{
-    meta: {
-      isReturnNativeResponse: true,
-    },
-  });
-}
-
-/**
- * @description: 强制用户下线
- */
-export function forceLogout(params) {
-  return Alova.Post('/admin/user/forceLogout', params,{
-    meta: {
-      isReturnNativeResponse: true,
-    },
-  });
-}
 
 /**
  * @description: 编辑会员信息

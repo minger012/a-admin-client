@@ -22,6 +22,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '产品库',
       sort: 2,
       permissions:['*','2'],
+      alwaysShow: true,
     },
     children: [
       {

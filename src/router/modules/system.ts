@@ -11,6 +11,7 @@ const routes: Array<RouteRecordRaw> = [
       title: '系统设置',
       sort: 8,
       permissions:['*','8'],
+      alwaysShow: true,
     },
     children: [
       {
