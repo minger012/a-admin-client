@@ -22,24 +22,6 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/content/message/index.vue'),
       },
-      {
-        path: 'announcement',
-        name: 'Announcement',
-        meta: {
-          title: '公告',
-          permissions:['*','1102'],
-        },
-        component: () => import('@/views/content/announcement/index.vue'),
-      },
-      {
-        path: 'activity',
-        name: 'Activity',
-        meta: {
-          title: '活动',
-          permissions:['*','1103'],
-        },
-        component: () => import('@/views/content/activity/index.vue'),
-      },
     ],
   },
 ];

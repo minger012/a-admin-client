@@ -94,11 +94,13 @@
 
   interface SearchFormType {
     uid?: string | number;
-    fb_id?: string | number;
     username?: string;
+    name?: string;
+    short_name?: string;
     admin_username?: string;
-    nickname?: string;
-    language?: string;
+    lang?: string;
+    operate_id?: string;
+    fb_id?: string | number;
     timeRange?: [number, number];
   }
 
@@ -139,7 +141,7 @@
       },
     },
     {
-      field: 'nickname',
+      field: 'name',
       component: 'NInput',
       label: '用户昵称',
       componentProps: {
@@ -147,7 +149,15 @@
       },
     },
     {
-      field: 'language',
+      field: 'short_name',
+      component: 'NInput',
+      label: '用户简称',
+      componentProps: {
+        placeholder: '请输入用户简称',
+      },
+    },
+    {
+      field: 'lang',
       component: 'NInput',
       label: '语言偏好',
       componentProps: {

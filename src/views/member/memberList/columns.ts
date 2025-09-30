@@ -1,24 +1,39 @@
 import { h } from 'vue';
-import { NTag, NButton, NSpace, NAvatar } from 'naive-ui';
+import { NTag, NButton, NSpace } from 'naive-ui';
 import { BasicColumn } from '@/components/Table';
 
 export interface MemberListData {
   id: number;
   username: string;
-  name: string;
-  nickname?: string;
-  avatar?: string;
   phone: string;
-  admin_username?: string;
-  code?: string;
-  pid?: number;
-  language?: string;
-  fb_id?: string;
-  withdrawal_method?: string;
-  money?: number;
+  name: string;
+  short_name: string;
+  remarks: string;
+  lv: number;
+  pid: number | null;
   state: number;
-  last_login_ip?: string;
-  create_time?: number;
+  sign: number;
+  create_time: number;
+  login_count: number;
+  last_login_time: number;
+  last_login_ip: string;
+  money: number;
+  freeze_money: number;
+  pledge_money: number;
+  pledge_refund: number;
+  lang: string;
+  pay_count: number;
+  score: number;
+  withdraw_disabled: string;
+  admin_id: number;
+  fb_id: string;
+  code: string | null;
+  service_address: string | null;
+  service_type: number | null;
+  operate_id: string | null;
+  ip: string | null;
+  admin_name: string;
+  bank: any[];
 }
 
 // Status mapping
@@ -50,20 +65,19 @@ export const columns: BasicColumn<MemberListData>[] = [
   },
   {
     title: '用户昵称',
-    key: 'nickname',
+    key: 'name',
+    width: 120,
+  },
+  {
+    title: '用户简称',
+    key: 'short_name',
     width: 120,
   },
   {
     title: '头像',
-    key: 'avatar',
-    width: 80,
-    render(row) {
-      return h(NAvatar, {
-        size: 'small',
-        src: row.avatar || 'https://via.placeholder.com/40',
-        round: true,
-      });
-    },
+    key: 'image',
+    width: 120,
+    
   },
   {
     title: '手机号',
@@ -72,7 +86,7 @@ export const columns: BasicColumn<MemberListData>[] = [
   },
   {
     title: '所属管理者',
-    key: 'admin_username',
+    key: 'admin_name',
     width: 120,
   },
   {
@@ -99,7 +113,7 @@ export const columns: BasicColumn<MemberListData>[] = [
   },
   {
     title: '语言偏好',
-    key: 'language',
+    key: 'lang',
     width: 100,
   },
   {
@@ -109,16 +123,17 @@ export const columns: BasicColumn<MemberListData>[] = [
   },
   {
     title: '提现方式',
-    key: 'withdrawal_method',
+    key: 'bank',
     width: 150,
     render(row) {
+      const bankCount = row.bank?.length || 0;
       return h(NSpace, { size: 'small' }, {
         default: () => [
           h(NButton, {
             text: true,
             type: 'primary',
             size: 'small',
-          }, { default: () => '查看' }),
+          }, { default: () => `查看(${bankCount})` }),
           h(NButton, {
             text: true,
             type: 'info',

@@ -26,12 +26,11 @@
   .logo {
     display: flex;
     align-items: center;
-    justify-content: center;
     height: 64px;
     line-height: 64px;
     overflow: hidden;
     white-space: nowrap;
-
+    padding: 0 16px;
     img {
       width: auto;
       height: 32px;

@@ -1,8 +1,9 @@
 <template>
   <div class="view-account">
-    <div class="view-account-header"></div>
+
     <div class="view-account-container w-[450px]">
-      <div class="text-left py-[30px] text-[24px] font-bold">
+      <div class="text-left py-[30px] text-[24px] font-bold flex items-center gap-3">
+        <img :src="websiteConfig.logo" class="h-[48px]" />
         管理员登录
       </div>
       <div class="view-account-form">
@@ -134,7 +135,9 @@
   flex-direction: column;
   height: 100vh;
   overflow: auto;
-
+  background: url(../../assets/images/bg.png) no-repeat center center;
+  background-size: cover;
+  
   &-container {
     flex: 1;
     padding: 32px 12px;

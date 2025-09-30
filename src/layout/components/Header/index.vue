@@ -19,7 +19,7 @@
     <!--左侧菜单-->
     <div class="layout-header-left" v-else>
       <!-- 菜单收起 -->
-      <div
+      <!-- <div
         class="ml-1 layout-header-trigger layout-header-trigger-min"
         @click="handleMenuCollapsed"
       >
@@ -29,7 +29,7 @@
         <n-icon size="18" v-else>
           <MenuFoldOutlined />
         </n-icon>
-      </div>
+      </div> -->
       <!-- 刷新 -->
       <div
         class="mr-1 layout-header-trigger layout-header-trigger-min"
@@ -118,11 +118,6 @@
       <div class="layout-header-trigger layout-header-trigger-min">
         <n-dropdown trigger="hover" @select="avatarSelect" :options="avatarOptions">
           <div class="avatar">
-            <n-avatar :src="websiteConfig.logo" v-if="websiteConfig.logo">
-              <template #icon>
-                <UserOutlined />
-              </template>
-            </n-avatar>
             <n-divider vertical />
             <span>{{ username }}</span>
           </div>

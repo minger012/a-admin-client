@@ -8,8 +8,16 @@
       :label-width="120"
       class="py-4"
     >
-      <n-form-item label="用户名" path="username">
-        <n-input placeholder="请输入用户名" v-model:value="formParams.username" disabled />
+      <n-form-item label="用户简称" path="short_name">
+        <n-input placeholder="请输入用户简称" v-model:value="formParams.short_name" />
+      </n-form-item>
+      <n-form-item label="店铺星级" path="lv">
+        <n-select v-model:value="formParams.lv" :options="starOptions" />
+      </n-form-item>
+      <n-form-item label="保证金" path="pledge_money">
+        <n-input-number v-model:value="formParams.pledge_money" :min="0" :precision="2" style="width: 100%">
+          <template #prefix>¥</template>
+        </n-input-number>
       </n-form-item>
       <n-form-item label="手机号" path="phone">
         <n-input placeholder="请输入手机号" v-model:value="formParams.phone" />
@@ -20,22 +28,15 @@
       <n-form-item label="Facebook ID" path="fb_id">
         <n-input placeholder="请输入Facebook ID" v-model:value="formParams.fb_id" />
       </n-form-item>
-      <n-form-item label="等级" path="lv">
-        <n-input-number v-model:value="formParams.lv" :min="1" style="width: 100%" />
-      </n-form-item>
-      <n-form-item label="状态" path="state">
+      <n-form-item label="是否激活" path="state">
         <n-radio-group v-model:value="formParams.state">
           <n-space>
-            <n-radio :value="1">正常</n-radio>
+            <n-radio :value="1">激活</n-radio>
             <n-radio :value="2">未激活</n-radio>
           </n-space>
         </n-radio-group>
       </n-form-item>
-      <n-form-item label="保证金" path="pledge_money">
-        <n-input-number v-model:value="formParams.pledge_money" :min="0" :precision="2" style="width: 100%">
-          <template #prefix>¥</template>
-        </n-input-number>
-      </n-form-item>
+      
       <n-form-item label="是否退还保证金" path="pledge_refund">
         <n-radio-group v-model:value="formParams.pledge_refund">
           <n-space>
@@ -104,9 +105,17 @@
     'success': [];
   }>();
 
+  const starOptions = [
+    { label: '星级1', value: 1 },
+    { label: '星级2', value: 2 },
+    { label: '星级3', value: 3 },
+    { label: '星级4', value: 4 },
+    { label: '星级5', value: 5 },
+  ];
+
   const formParams = reactive({
     id: 0,
-    username: '',
+    short_name: '',
     phone: '',
     name: '',
     fb_id: '',
@@ -145,7 +154,7 @@
     if (val && props.userData) {
       Object.assign(formParams, {
         id: props.userData.id,
-        username: props.userData.username,
+        short_name: props.userData.short_name,
         phone: props.userData.phone || '',
         name: props.userData.name || '',
         fb_id: props.userData.fb_id || '',
