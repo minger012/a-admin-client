@@ -12,11 +12,12 @@ export interface CouponListData {
   min: number;
   max: number;
   expir_type?: number;
-  expir_days?: number;
+  expir_day?: number;
   start_time: number;
   end_time: number;
   state: number;
   create_time: number;
+  update_time: number;
 }
 
 // 优惠券类型选项
@@ -95,6 +96,9 @@ function renderIsNew(is_new: number) {
 
 export const columns = [
   {
+    type: 'selection',
+  },
+  {
     title: 'ID',
     key: 'id',
     width: 80,
@@ -133,7 +137,15 @@ export const columns = [
     key: 'discount',
     width: 120,
     render(row) {
-      return `${row.discount}%`;
+      return `${row.type != 5 ? row.discount + '%' : '-'}`;
+    },
+  },
+  {
+    title: '折扣金额',
+    key: 'discount_amount',
+    width: 120,
+    render(row) {
+      return `${row.type == 5 ? '¥' + row.discount_amount : '-'}`;
     },
   },
   {
@@ -153,19 +165,27 @@ export const columns = [
     },
   },
   {
-    title: '开始时间',
+    title: '生效时间',
     key: 'start_time',
-    width: 180,
+    width: 160,
     render(row) {
-      return row.start_time ? new Date(row.start_time * 1000).toLocaleString() : '-';
+      return row.expir_type == 2 ? row.start_time ? new Date(row.start_time * 1000).toLocaleString() : '-' : '-';
     },
   },
   {
-    title: '结束时间',
+    title: '过期时间',
     key: 'end_time',
-    width: 180,
+    width: 160,
     render(row) {
-      return row.end_time ? new Date(row.end_time * 1000).toLocaleString() : '-';
+      return row.expir_type == 2 ? row.end_time ? new Date(row.end_time * 1000).toLocaleString() : '-' : '-';
+    },
+  },
+  {
+    title: '用户券有效天数',
+    key: 'expir_day',
+    width: 140,
+    render(row) {
+      return row.expir_type == 1 ? row.expir_day + '天' : '无限制';
     },
   },
   {
@@ -179,9 +199,17 @@ export const columns = [
   {
     title: '创建时间',
     key: 'create_time',
-    width: 180,
+    width: 160,
     render(row) {
       return row.create_time ? new Date(row.create_time * 1000).toLocaleString() : '-';
+    },
+  },
+  {
+    title: '更新时间',
+    key: 'update_time',
+    width: 160,
+    render(row) {
+      return row.update_time ? new Date(row.update_time * 1000).toLocaleString() : '-';
     },
   },
 ];

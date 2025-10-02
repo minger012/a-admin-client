@@ -47,6 +47,10 @@ const virtualStateMap = {
 
 export const columns: BasicColumn<RechargeListData>[] = [
   {
+    type: 'selection',
+    fixed: 'left',
+  },
+  {
     title: 'ID',
     key: 'id',
     width: 80,

@@ -13,6 +13,9 @@ export interface CodeListData {
 
 export const columns = [
   {
+    type: 'selection',
+  },
+  {
     title: 'ID',
     key: 'id',
     width: 80,

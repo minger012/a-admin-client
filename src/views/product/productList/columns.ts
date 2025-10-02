@@ -43,6 +43,9 @@ export const stateMap:{[key:number]:string} = {
 
 export const columns: BasicColumn<ProductListData>[] = [
   {
+    type: 'selection',
+  },
+  {
     title: 'ID',
     key: 'id',
     width:100,

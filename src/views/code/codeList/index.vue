@@ -13,9 +13,10 @@
       ref="actionRef"
       :scroll-x="1200"
       :striped="true"
+      v-model:checked-row-keys="checkedRowKeys"
     >
       <template #tableTitle>
-        <n-space>
+        <n-space class="flex items-center">
           <n-button type="primary" @click="addCode">
             <template #icon>
               <n-icon>
@@ -23,6 +24,20 @@
               </n-icon>
             </template>
             新增授权码
+          </n-button>
+          <n-button @click="handleExport">
+            <template #icon>
+              <n-icon>
+                <DownloadOutlined />
+              </n-icon>
+            </template>
+            导出
+          </n-button>
+          <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+            已选 {{ checkedRowKeys.length }} 项
+          </span>
+          <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+            清除
           </n-button>
         </n-space>
       </template>
@@ -65,15 +80,17 @@
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { columns, CodeListData, stateOptions } from './columns';
   import { codeList, codeAdd } from '@/api/code';
-  import { PlusOutlined } from '@vicons/antd';
+  import { PlusOutlined, DownloadOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
+  import * as XLSX from 'xlsx';
 
   const message = useMessage();
   const actionRef = ref();
   const formRef = ref();
   const showAddModal = ref(false);
   const formBtnLoading = ref(false);
+  const checkedRowKeys = ref<Array<number>>([]);
   interface SearchFormType {
     state?: number | string;
     username?: string;
@@ -231,6 +248,81 @@
   // 重置
   function handleReset() {
     reloadTable();
+  }
+
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
+  // 导出到Excel
+  async function handleExport() {
+    let exportData: CodeListData[] = [];
+    
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: CodeListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999', // 最大值
+          ...searchForm.value,
+        };
+        
+        // 处理时间范围
+        if (params.timeRange && params.timeRange.length === 2) {
+          params.sTime = Math.floor(params.timeRange[0] / 1000);
+          params.eTime = Math.floor(params.timeRange[1] / 1000);
+          delete params.timeRange;
+        }
+        
+        const res: any = await codeList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
+      }
+    }
+    
+    if (exportData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+    
+    exportToExcel(exportData);
+  }
+
+  // 导出Excel文件
+  function exportToExcel(data: CodeListData[]) {
+    // 处理数据
+    const excelData = data.map(item => ({
+      'ID': item.id,
+      '授权码': item.code,
+      '状态': item.state === 0 ? '未使用' : '已使用',
+      '所属管理者': item.username || '-',
+      '更新时间': item.update_time ? new Date(item.update_time * 1000).toLocaleString() : '',
+      '创建时间': item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '',
+    }));
+    
+    // 创建worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    
+    // 创建workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '授权码列表');
+    
+    // 生成文件名（带时间戳）
+    const fileName = `授权码列表_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    
+    // 导出文件
+    XLSX.writeFile(workbook, fileName);
+    
+    message.success(`导出成功，共 ${data.length} 条数据`);
   }
 </script>
 

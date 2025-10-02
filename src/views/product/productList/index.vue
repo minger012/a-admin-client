@@ -11,12 +11,12 @@
       :row-key="(row:ProductListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
-      @update:checked-row-keys="onCheckedRow"
+      v-model:checked-row-keys="checkedRowKeys"
       :scroll-x="1200"
       :striped="true"
     >
       <template #tableTitle>
-        <n-space>
+        <n-space class="flex items-center">
           <n-button type="primary" @click="addProduct">
             <template #icon>
               <n-icon>
@@ -24,6 +24,20 @@
               </n-icon>
             </template>
             新增产品
+          </n-button>
+          <n-button @click="handleExport">
+            <template #icon>
+              <n-icon>
+                <DownloadOutlined />
+              </n-icon>
+            </template>
+            导出
+          </n-button>
+          <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+            已选 {{ checkedRowKeys.length }} 项
+          </span>
+          <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+            清除
           </n-button>
         </n-space>
       </template>
@@ -172,11 +186,13 @@
   import { columns, ProductListData, stateOptions } from './columns';
   import { goodsList, goodsAdd, goodsEdit, goodsDel } from '@/api/goods';
   import { getAppEnvConfig } from '@/utils/env';
-  import { PlusOutlined, DeleteOutlined } from '@vicons/antd';
+  import { PlusOutlined, DeleteOutlined, DownloadOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { type FormRules, NButton, NInput, NIcon, useDialog } from 'naive-ui';
   import { useUser } from '@/store/modules/user';
   import type { UploadFileInfo } from 'naive-ui';
+  import * as XLSX from 'xlsx';
+  
   const {
     VITE_GLOB_API_URL_PREFIX,
   } = getAppEnvConfig();
@@ -185,6 +201,7 @@
   const formRef = ref();
   const userStore = useUser();
   const dialog = useDialog();
+  const checkedRowKeys = ref<Array<number>>([]);
   
   // 编辑表单
   const showEditModal = ref(false);
@@ -424,10 +441,6 @@
     }
   }
 
-  function onCheckedRow(rowKeys) {
-    console.log(rowKeys);
-  }
-
   function reloadTable() {
     actionRef.value.reload();
   }
@@ -634,6 +647,68 @@
   // 重置
   function handleReset() {
     reloadTable();
+  }
+
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
+  // 导出到Excel
+  async function handleExport() {
+    let exportData: ProductListData[] = [];
+    
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: ProductListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999',
+        };
+        
+        const res: any = await goodsList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
+      }
+    }
+    
+    if (exportData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+    
+    exportToExcel(exportData);
+  }
+
+  // 导出Excel文件
+  function exportToExcel(data: ProductListData[]) {
+    const excelData = data.map(item => ({
+      'ID': item.id,
+      '产品名称': item.name,
+      '状态': item.state === 0 ? '未生效' : item.state === 1 ? '生效' : item.state === 2 ? '审核中' : '封禁',
+      '简介': item.intro || '-',
+      'Logo': item.logo || '-',
+      '图片': item.image || '-',
+      '创建时间': item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '-',
+      '更新时间': item.update_time ? new Date(item.update_time * 1000).toLocaleString() : '-',
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '产品列表');
+    
+    const fileName = `产品列表_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    message.success(`导出成功，共 ${data.length} 条数据`);
   }
 </script>
 

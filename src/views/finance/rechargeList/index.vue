@@ -9,12 +9,30 @@
       :row-key="(row:RechargeListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
-      @update:checked-row-keys="onCheckedRow"
+      v-model:checked-row-keys="checkedRowKeys"
       :scroll-x="2100"
       :striped="true"
     >
-      <template #toolbar>
-        <div class="text-right">充值总额：<NTag type="warning">{{ totalMoney }}</NTag></div>
+      <template #tableTitle>
+        <n-space class="flex items-center justify-between" style="width: 100%;">
+          <n-space class="flex items-center">
+            <n-button @click="handleExport">
+              <template #icon>
+                <n-icon>
+                  <DownloadOutlined />
+                </n-icon>
+              </template>
+              导出
+            </n-button>
+            <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+              已选 {{ checkedRowKeys.length }} 项
+            </span>
+            <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+              清除
+            </n-button>
+            <div>当前充值方式总额：<strong class="text-[#2d8cf0]">{{ totalMoney }}</strong></div>
+          </n-space>
+        </n-space>
       </template>
     </BasicTable>
   </n-card>
@@ -27,10 +45,13 @@
   import { useMessage, useDialog } from 'naive-ui';
   import { columns, RechargeListData } from './columns';
   import { getOrderList, deleteOrder } from '@/api/system/order';
+  import { DownloadOutlined } from '@vicons/antd';
+  import * as XLSX from 'xlsx';
 
   const message = useMessage();
   const dialog = useDialog();
   const actionRef = ref();
+  const checkedRowKeys = ref<Array<number>>([]);
 
   // 搜索表单配置
   const schemas: FormSchema[] = [
@@ -98,7 +119,7 @@
   ];
   
   // 搜索参数
-  const searchParams = reactive({
+  const searchParams:any = reactive({
     uid: null,
     username: '',
     admin_username: '',
@@ -190,7 +211,7 @@
     }
 
     return getOrderList(params)
-      .then((response) => {
+      .then((response:any) => {
         const { data } = response;
         totalMoney.value = data.money || '0';
         return {
@@ -201,14 +222,10 @@
           itemCount: data.total,
         };
       })
-      .catch((error) => {
+      .catch(() => {
         message.error('获取充值列表失败');
         return { list: [], page: 1, pageCount: 0, pageSize: 10, itemCount: 0 };
       });
-  }
-
-  function onCheckedRow(rowKeys) {
-    console.log(rowKeys);
   }
 
   function reloadTable() {
@@ -230,17 +247,16 @@
       onPositiveClick: () => {
         message.loading('删除中...');
         deleteOrder(record.id)
-          .then((res) => {
-            const { data } = res;
-            if (data.code === 1) {
+          .then((res:any) => {
+            if (res.code == 1) {
               message.success('删除成功');
               reloadTable();
             } else {
-              message.error(data.msg || '删除失败');
+              message.error(res.msg || '删除失败');
             }
           })
-          .catch((error) => {
-            message.error('删除失败: ' + (error.message || '未知错误'));
+          .catch(() => {
+            message.error('删除失败');
           });
       }
     });
@@ -263,6 +279,86 @@
     searchParams.type = '';
     searchParams.timeRange = null;
     reloadTable();
+  }
+
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
+  // 导出到Excel
+  async function handleExport() {
+    let exportData: RechargeListData[] = [];
+    
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: RechargeListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999',
+          ...searchParams,
+        };
+        
+        // 处理时间范围
+        if (params.timeRange && params.timeRange.length === 2) {
+          params.sTime = Math.floor(params.timeRange[0] / 1000);
+          params.eTime = Math.floor(params.timeRange[1] / 1000);
+          delete params.timeRange;
+        }
+        
+        const res: any = await getOrderList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
+      }
+    }
+    
+    if (exportData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+    
+    exportToExcel(exportData);
+  }
+
+  // 导出Excel文件
+  function exportToExcel(data: RechargeListData[]) {
+    const typeMap = { 1: '真实充值', 2: '虚拟充值', 3: '系统赠送' };
+    const stateMap = { 0: '失败', 1: '成功' };
+    const virtualStateMap = { 0: '未退回', 1: '已退回' };
+    
+    const excelData = data.map(item => ({
+      'ID': item.id,
+      '用户ID': item.uid,
+      '用户简称': item.username || '-',
+      'FB_ID': item.fb_id || '-',
+      '所属管理者': item.admin_id || '-',
+      '充值金额': item.money.toFixed(2),
+      '充值截图': item.image || '-',
+      '充值方式': typeMap[item.type] || '-',
+      '状态': stateMap[item.state] || '-',
+      '虚拟充值退回状态': item.type === 2 ? virtualStateMap[item.virtual_state] || '-' : '-',
+      '后台备注': item.remarks || '-',
+      '用户端备注': item.user_remarks || '-',
+      '更新时间': item.update_time ? new Date(item.update_time * 1000).toLocaleString() : '-',
+      '创建时间': item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '-',
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '充值记录');
+    
+    const fileName = `充值记录_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    message.success(`导出成功，共 ${data.length} 条数据`);
   }
 </script>
 

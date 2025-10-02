@@ -12,11 +12,12 @@
       :row-key="(row:CouponListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
-      :scroll-x="1800"
+      v-model:checked-row-keys="checkedRowKeys"
+      :scroll-x="2300"
       :striped="true"
     >
       <template #tableTitle>
-        <n-space>
+        <n-space class="flex items-center">
           <n-button type="primary" @click="addCoupon">
             <template #icon>
               <n-icon>
@@ -24,6 +25,20 @@
               </n-icon>
             </template>
             新增优惠券
+          </n-button>
+          <n-button @click="handleExport">
+            <template #icon>
+              <n-icon>
+                <DownloadOutlined />
+              </n-icon>
+            </template>
+            导出
+          </n-button>
+          <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+            已选 {{ checkedRowKeys.length }} 项
+          </span>
+          <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+            清除
           </n-button>
         </n-space>
       </template>
@@ -205,7 +220,7 @@
         </n-form-item>
 
         <!-- 天数模式 -->
-        <n-form-item v-if="formParams.expir_type === 1" path="expir_days">
+        <n-form-item v-if="formParams.expir_type === 1" path="expir_day">
           <template #label>
             有效天数
             <n-tooltip trigger="hover">
@@ -216,7 +231,7 @@
             </n-tooltip>
           </template>
           <n-input-number
-            v-model:value="formParams.expir_days"
+            v-model:value="formParams.expir_day"
             :min="1"
             :max="3650"
             :precision="0"
@@ -262,9 +277,10 @@
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { columns, CouponListData, stateOptions, typeOptions } from './columns';
   import { couponList, couponAdd, couponEdit, couponDel } from '@/api/coupon';
-  import { PlusOutlined, QuestionCircleOutlined } from '@vicons/antd';
+  import { PlusOutlined, QuestionCircleOutlined, DownloadOutlined } from '@vicons/antd';
   import { useMessage, useDialog } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
+  import * as XLSX from 'xlsx';
 
   const message = useMessage();
   const dialog = useDialog();
@@ -272,6 +288,7 @@
   const formRef = ref();
   const showEditModal = ref(false);
   const formBtnLoading = ref(false);
+  const checkedRowKeys = ref<Array<number>>([]);
 
   interface SearchFormType {
     id?: string | number;
@@ -295,7 +312,7 @@
     min: 0,
     max: 0,
     expir_type: 2, // 1:天数 2:时间段
-    expir_days: 90,
+    expir_day: 90,
     start_time: 0,
     end_time: 0,
     state: 1,
@@ -481,7 +498,7 @@
       min: 0,
       max: 0,
       expir_type: 2,
-      expir_days: 90,
+      expir_day: 90,
       start_time: 0,
       end_time: 0,
       state: 1,
@@ -521,7 +538,7 @@
         // 根据有效期类型添加对应字段
         if (formParams.expir_type === 1) {
           // 天数模式
-          submitData.expir_days = formParams.expir_days;
+          submitData.expir_day = formParams.expir_day;
         } else {
           // 时间段模式
           submitData.start_time = formParams.start_time;
@@ -628,7 +645,7 @@
       min: record.min,
       max: record.max,
       expir_type: record.expir_type || 2,
-      expir_days: record.expir_days || 90,
+      expir_day: record.expir_day || 90,
       start_time: record.start_time,
       end_time: record.end_time,
       state: record.state,
@@ -666,6 +683,79 @@
   // 重置
   function handleReset() {
     reloadTable();
+  }
+
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
+  // 导出到Excel
+  async function handleExport() {
+    let exportData: CouponListData[] = [];
+    
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: CouponListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999',
+          ...searchForm.value,
+        };
+        
+        const res: any = await couponList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
+      }
+    }
+    
+    if (exportData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+    
+    exportToExcel(exportData);
+  }
+
+  // 导出Excel文件
+  function exportToExcel(data: CouponListData[]) {
+    const typeMap = { 1: '增值券', 2: '抵扣券', 3: '团队券', 4: '自定义', 5: '固定金额' };
+    const isNewMap = { 0: '普通券', 1: '新人券' };
+    const stateMap = { 1: '启用', 2: '停用' };
+    
+    const excelData = data.map(item => ({
+      'ID': item.id,
+      '优惠券名称': item.name,
+      '是否新人券': isNewMap[item.is_new] || '-',
+      '优惠券类型': typeMap[item.type] || '-',
+      '折扣百分比': item.type != 5 ? item.discount + '%' : '-',
+      '折扣金额': item.type == 5 ? '¥' + item.discount_amount : '-',
+      '使用最低金额': item.min ? '¥' + item.min : '无限制',
+      '使用最高金额': item.max ? '¥' + item.max : '无限制',
+      '生效时间': item.expir_type == 2 ? item.start_time ? new Date(item.start_time * 1000).toLocaleString() : '-' : '-',
+      '过期时间': item.expir_type == 2 ? item.end_time ? new Date(item.end_time * 1000).toLocaleString() : '-' : '-',
+      '用户券有效天数': item.expir_type == 1 ? item.expir_day + '天' : '无限制',
+      '状态': stateMap[item.state] || '-',
+      '创建时间': item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '-',
+      '更新时间': item.update_time ? new Date(item.update_time * 1000).toLocaleString() : '-',
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '优惠券列表');
+    
+    const fileName = `优惠券列表_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    message.success(`导出成功，共 ${data.length} 条数据`);
   }
 </script>
 
