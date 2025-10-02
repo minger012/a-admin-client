@@ -45,10 +45,12 @@ export const columns: BasicColumn<ProductListData>[] = [
   {
     title: 'ID',
     key: 'id',
+    width:100,
   },
   {
     title: '产品名称',
     key: 'name',
+    width:200,
   },
   {
     title: '状态',
@@ -59,10 +61,12 @@ export const columns: BasicColumn<ProductListData>[] = [
         round: true,
       }, () => stateMap[row.state]);
     },
+    width:120,
   },
   {
     title: '简介',
     key: 'intro',
+    width: 200,
   },
   {
     title: 'Logo',
@@ -76,6 +80,7 @@ export const columns: BasicColumn<ProductListData>[] = [
         showToolbarTooltip: true,
       });
     },
+    width:120,
   },
   {
     title: '图片',
@@ -89,6 +94,7 @@ export const columns: BasicColumn<ProductListData>[] = [
         showToolbarTooltip: true,
       });
     },
+    width:120,
   },
   {
     title: '创建时间',

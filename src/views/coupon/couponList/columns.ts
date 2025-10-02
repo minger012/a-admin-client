@@ -8,8 +8,11 @@ export interface CouponListData {
   intro?: string;
   is_new: number;
   discount: number;
+  discount_amount?: number;
   min: number;
   max: number;
+  expir_type?: number;
+  expir_days?: number;
   start_time: number;
   end_time: number;
   state: number;

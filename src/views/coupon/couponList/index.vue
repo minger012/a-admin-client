@@ -62,47 +62,140 @@
           </n-radio-group>
         </n-form-item>
 
-        <n-divider title-placement="left">优惠信息</n-divider>
-        <n-form-item label="优惠券类型" path="type">
-          <n-select v-model:value="formParams.type" :options="typeOptions" placeholder="请选择优惠券类型" />
-        </n-form-item>
-        <n-form-item label="折扣百分比" path="discount">
-          <n-input-number
-            v-model:value="formParams.discount"
-            :min="0"
-            :max="100"
-            :precision="0"
-            placeholder="请输入折扣百分比"
-            style="width: 100%"
-          >
-            <template #suffix>%</template>
-          </n-input-number>
-        </n-form-item>
-        <n-form-item label="使用最低金额" path="min">
-          <n-input-number
-            v-model:value="formParams.min"
-            :min="0"
-            :precision="2"
-            placeholder="0表示无限制"
-            style="width: 100%"
-          >
-            <template #prefix>¥</template>
-          </n-input-number>
-        </n-form-item>
-        <n-form-item label="使用最高金额" path="max">
-          <n-input-number
-            v-model:value="formParams.max"
-            :min="0"
-            :precision="2"
-            placeholder="0表示无限制"
-            style="width: 100%"
-          >
-            <template #prefix>¥</template>
-          </n-input-number>
-        </n-form-item>
+        <div class="border-t-[2px] rounded-[10px]" :style="{borderColor: typeColorMap[formParams.type]}">
+          <div class="text-sm font-bold p-4">优惠信息</div>
+          <n-grid :cols="2" :x-gap="12">
+            <n-form-item-gi label="优惠券类型" path="type">
+              <n-select 
+                v-model:value="formParams.type" 
+                :options="typeOptions" 
+                placeholder="请选择优惠券类型"
+                @update:value="handleTypeChange"
+                :render-label="renderLabel"
+              >
+              </n-select>
+            </n-form-item-gi>
+            
+            <!-- 增值券、抵扣券、团队券：下拉选择 -->
+            <n-form-item-gi v-if="[1, 2, 3].includes(formParams.type)" path="discount">
+              <template #label>
+                折扣百分比
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+                  </template>
+                  增值券为正值，抵扣券和团队券为负值
+                </n-tooltip>
+              </template>
+              <n-select
+                v-model:value="formParams.discount"
+                :options="discountOptions"
+                placeholder="请选择折扣百分比"
+                style="width: 100%"
+              />
+            </n-form-item-gi>
+
+            <!-- 自定义：自定义输入百分比 -->
+            <n-form-item-gi v-if="formParams.type === 4" path="discount">
+              <template #label>
+                折扣百分比
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+                  </template>
+                  请输入折扣百分比，正数为增值，负数为抵扣
+                </n-tooltip>
+              </template>
+              <n-input-number
+                v-model:value="formParams.discount"
+                :min="-100"
+                :max="100"
+                :precision="0"
+                placeholder="请输入折扣百分比"
+                style="width: 100%"
+              >
+                <template #suffix>%</template>
+              </n-input-number>
+            </n-form-item-gi>
+
+            <!-- 固定金额：输入折扣金额 -->
+            <n-form-item-gi v-if="formParams.type === 5" label="折扣金额" path="discount_amount">
+              <n-input-number
+                v-model:value="formParams.discount_amount"
+                :min="0"
+                :precision="2"
+                placeholder="请输入折扣金额"
+                style="width: 100%"
+              >
+                <template #prefix>¥</template>
+              </n-input-number>
+            </n-form-item-gi>
+            
+            <n-form-item-gi path="min">
+              <template #label>
+                使用最低金额
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+                  </template>
+                  优惠券使用的最低金额要求，0表示无限制
+                </n-tooltip>
+              </template>
+              <n-input-number
+                v-model:value="formParams.min"
+                :min="0"
+                :precision="2"
+                placeholder="0表示无限制"
+                style="width: 100%"
+              >
+                <template #prefix>¥</template>
+              </n-input-number>
+            </n-form-item-gi>
+            
+            <n-form-item-gi path="max">
+              <template #label>
+                使用最高金额
+                <n-tooltip trigger="hover">
+                  <template #trigger>
+                    <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+                  </template>
+                  优惠券使用的最高金额限制，0表示无限制
+                </n-tooltip>
+              </template>
+              <n-input-number
+                v-model:value="formParams.max"
+                :min="0"
+                :precision="2"
+                placeholder="0表示无限制"
+                style="width: 100%"
+              >
+                <template #prefix>¥</template>
+              </n-input-number>
+            </n-form-item-gi>
+          </n-grid>
+        </div>
 
         <n-divider title-placement="left">有效期设置</n-divider>
-        <n-form-item label="优惠券有效期" path="timeRange">
+        <n-form-item label="有效期类型" path="expir_type">
+          <n-radio-group v-model:value="formParams.expir_type">
+            <n-space>
+              <n-radio :value="2">有效期范围</n-radio>
+              <n-radio :value="1">有效天数</n-radio>
+            </n-space>
+          </n-radio-group>
+        </n-form-item>
+
+        <!-- 时间段模式 -->
+        <n-form-item v-if="formParams.expir_type === 2" path="timeRange">
+          <template #label>
+            有效期范围
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+              </template>
+              只有在此时间段内，优惠券才能被用户使用，否则无法使用
+            </n-tooltip>
+          </template>
           <n-date-picker
             v-model:value="timeRange"
             type="datetimerange"
@@ -110,6 +203,33 @@
             style="width: 100%"
           />
         </n-form-item>
+
+        <!-- 天数模式 -->
+        <n-form-item v-if="formParams.expir_type === 1" path="expir_days">
+          <template #label>
+            有效天数
+            <n-tooltip trigger="hover">
+              <template #trigger>
+                <n-icon size="14" style="margin-left: 4px; cursor: help;" :component="QuestionCircleOutlined" />
+              </template>
+              普通优惠券默认有效期为90天
+            </n-tooltip>
+          </template>
+          <n-input-number
+            v-model:value="formParams.expir_days"
+            :min="1"
+            :max="3650"
+            :precision="0"
+            placeholder="请输入有效天数"
+            style="width: 100%"
+          >
+            <template #suffix>天</template>
+          </n-input-number>
+          
+        </n-form-item>
+        <div class="text-[#999] text-[12px] pl-[120px] pb-[20px] mt-[-10px]" v-if="formParams.expir_type === 1">
+          注意：此为用户收到优惠券后的有效期，从优惠券发放给用户的那一刻开始计算 (普通优惠券默认90天)
+        </div>
         <n-form-item label="优惠券状态" path="state">
           <n-radio-group v-model:value="formParams.state">
             <n-space>
@@ -137,12 +257,12 @@
 </template>
 
 <script lang="ts" setup>
-  import { h, reactive, ref } from 'vue';
+  import { h, reactive, ref, computed } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { columns, CouponListData, stateOptions, typeOptions } from './columns';
   import { couponList, couponAdd, couponEdit, couponDel } from '@/api/coupon';
-  import { PlusOutlined } from '@vicons/antd';
+  import { PlusOutlined, QuestionCircleOutlined } from '@vicons/antd';
   import { useMessage, useDialog } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
 
@@ -170,9 +290,12 @@
     type: 1,
     intro: '',
     is_new: 0,
-    discount: 0,
+    discount: null,
+    discount_amount: null,
     min: 0,
     max: 0,
+    expir_type: 2, // 1:天数 2:时间段
+    expir_days: 90,
     start_time: 0,
     end_time: 0,
     state: 1,
@@ -226,6 +349,46 @@
       slot: 'statusSlot',
     },
   ];
+
+  // 根据优惠券类型计算折扣选项
+  const discountOptions = computed(() => {
+    switch (formParams.type) {
+      case 1: // 增值券
+        return [
+          { label: '+5%', value: 5 },
+          { label: '+10%', value: 10 },
+          { label: '+15%', value: 15 },
+          { label: '+20%', value: 20 },
+          { label: '+30%', value: 30 },
+        ];
+      case 2: // 抵扣券
+        return [
+          { label: '-5%', value: -5 },
+          { label: '-10%', value: -10 },
+          { label: '-15%', value: -15 },
+          { label: '-20%', value: -20 },
+          { label: '-30%', value: -30 },
+        ];
+      case 3: // 团队券
+        return [
+          { label: '-10%', value: -10 },
+          { label: '-20%', value: -20 },
+          { label: '-30%', value: -30 },
+          { label: '-40%', value: -40 },
+          { label: '-50%', value: -50 },
+          { label: '-60%', value: -60 },
+        ];
+      default:
+        return [];
+    }
+  });
+
+  // 类型切换时重置折扣值
+  function handleTypeChange() {
+    // 重置所有折扣相关字段
+    formParams.discount = null;
+    formParams.discount_amount = null;
+  }
 
   // 表格操作列配置
   const actionColumn = reactive({
@@ -314,8 +477,11 @@
       intro: '',
       is_new: 0,
       discount: 0,
+      discount_amount: 0,
       min: 0,
       max: 0,
+      expir_type: 2,
+      expir_days: 90,
       start_time: 0,
       end_time: 0,
       state: 1,
@@ -333,26 +499,43 @@
         // 表单验证
         await formRef.value?.validate();
         
-        // 处理时间
-        if (timeRange.value && timeRange.value.length === 2) {
+        // 处理时间：只有在时间段模式才需要
+        if (formParams.expir_type === 2 && timeRange.value && timeRange.value.length === 2) {
           formParams.start_time = Math.floor(timeRange.value[0] / 1000);
           formParams.end_time = Math.floor(timeRange.value[1] / 1000);
         }
         
         // 准备提交的数据
-        const submitData = {
+        const submitData: any = {
           id: formParams.id,
           name: formParams.name,
           type: formParams.type,
           intro: formParams.intro,
           is_new: formParams.is_new,
-          discount: formParams.discount,
           min: formParams.min,
           max: formParams.max,
-          start_time: formParams.start_time,
-          end_time: formParams.end_time,
+          expir_type: formParams.expir_type,
           state: formParams.state,
         };
+        
+        // 根据有效期类型添加对应字段
+        if (formParams.expir_type === 1) {
+          // 天数模式
+          submitData.expir_days = formParams.expir_days;
+        } else {
+          // 时间段模式
+          submitData.start_time = formParams.start_time;
+          submitData.end_time = formParams.end_time;
+        }
+        
+        // 根据类型添加折扣字段
+        if (formParams.type === 5) {
+          // 固定金额
+          submitData.discount_amount = formParams.discount_amount;
+        } else {
+          // 其他类型都使用折扣百分比
+          submitData.discount = formParams.discount;
+        }
         
         // 发送请求
         if (formParams.id) {
@@ -385,6 +568,53 @@
     }, 0);
   }
 
+  // 优惠券类型颜色映射
+  const typeColorMap = {
+    1: '#4caf50', // 绿色 - 增值券
+    2: '#2196f3', // 蓝色 - 抵扣券
+    3: '#9c27b0', // 紫色 - 团队券
+    4: '#ff9800', // 橙色 - 自定义
+    5: '#f44336', // 红色 - 固定金额
+  };
+
+  function renderLabel(option: any) {
+    const color = typeColorMap[option.value as number] || '#999';
+    
+    return h(
+      "div",
+      {
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+        }
+      },
+      [
+        h(
+          "span",
+          {
+            style: {
+              display: 'inline-block',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              backgroundColor: color,
+              marginRight: '8px',
+            }
+          }
+        ),
+        h(
+          "span",
+          {
+            style: {
+              padding: '2px 4px',
+              borderRadius: '4px',
+            }
+          },
+          option.label as string
+        )
+      ]
+    );
+  }
   // 编辑优惠券
   function handleEdit(record: CouponListData) {
     Object.assign(formParams, {
@@ -394,16 +624,21 @@
       intro: record.intro || '',
       is_new: record.is_new,
       discount: record.discount,
+      discount_amount: record.discount_amount || 0,
       min: record.min,
       max: record.max,
+      expir_type: record.expir_type || 2,
+      expir_days: record.expir_days || 90,
       start_time: record.start_time,
       end_time: record.end_time,
       state: record.state,
     });
     
-    // 设置时间范围
-    if (record.start_time && record.end_time) {
+    // 设置时间范围（只在时间段模式下）
+    if (formParams.expir_type === 2 && record.start_time && record.end_time) {
       timeRange.value = [record.start_time * 1000, record.end_time * 1000];
+    } else {
+      timeRange.value = null;
     }
     
     showEditModal.value = true;

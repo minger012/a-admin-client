@@ -36,7 +36,7 @@
         :rules="rules"
         ref="formRef"
         label-placement="left"
-        :label-width="120"
+        :label-width="140"
         class="py-4"
       >
         <n-form-item label="产品名称" path="name">
@@ -54,6 +54,18 @@
             placeholder="请输入产品简介"
             v-model:value="formParams.intro"
             :autosize="{ minRows: 3, maxRows: 5 }"
+          />
+        </n-form-item>
+        <n-form-item label="状态" path="state">
+          <n-select
+            v-model:value="formParams.state"
+            :options="[
+              { label: '未生效', value: 0 },
+              { label: '生效', value: 1 },
+              { label: '审核中', value: 2 },
+              { label: '封禁', value: 3 },
+            ]"
+            placeholder="请选择状态"
           />
         </n-form-item>
         
@@ -91,16 +103,15 @@
           </n-upload>
         </n-form-item>
         
-        <n-form-item label="谷歌商店链接" path="google_play">
-          <n-input placeholder="请输入谷歌商店链接" v-model:value="formParams.google_play" />
+        <n-form-item label="Google Play 链接" path="google_play">
+          <n-input placeholder="请输入" v-model:value="formParams.google_play" />
         </n-form-item>
         
-        <n-form-item label="苹果商店链接" path="app_store">
-          <n-input placeholder="请输入苹果商店链接" v-model:value="formParams.app_store" />
+        <n-form-item label="App Store 链接" path="app_store">
+          <n-input placeholder="请输入" v-model:value="formParams.app_store" />
         </n-form-item>
         
         <n-form-item label="应用信息" path="app_info">
-          <n-card>
             <n-space vertical>
               <n-button type="primary" @click="addAppInfo">
                 <template #icon>
@@ -109,13 +120,13 @@
                 添加信息
               </n-button>
               <n-data-table
+                size="small"
                 :columns="appInfoColumns"
                 :data="formParams.app_info || []"
                 :pagination="false"
                 :bordered="true"
               />
             </n-space>
-          </n-card>
         </n-form-item>
         
         <n-form-item label="排序" path="sort">
@@ -123,19 +134,6 @@
             v-model:value="formParams.sort"
             :min="0"
             placeholder="请输入排序"
-          />
-        </n-form-item>
-        
-        <n-form-item label="状态" path="state">
-          <n-select
-            v-model:value="formParams.state"
-            :options="[
-              { label: '未生效', value: 0 },
-              { label: '生效', value: 1 },
-              { label: '审核中', value: 2 },
-              { label: '封禁', value: 3 },
-            ]"
-            placeholder="请选择状态"
           />
         </n-form-item>
         
@@ -296,11 +294,11 @@
       trigger: ['blur', 'change'],
       message: '请上传产品图片',
     },
-    sort: {
-      required: false,
+    state: {
+      required: true,
       type:'number',
       trigger: ['blur', 'change'],
-      message: '请输入排序',
+      message: '请选择状态',
     },
   };
 
@@ -580,12 +578,6 @@
 
   // 编辑产品
   function handleEdit(record: Recordable) {
-    let appInfo = []
-    try {
-      appInfo = JSON.parse(record.app_info);
-    } catch (error) {
-      console.error('解析app_info失败:', error);
-    }
     // 重置表单
     Object.assign(formParams, {
       id: record.id,
@@ -598,7 +590,7 @@
       image: record.image || '',
       google_play: record.google_play || '',
       app_store: record.app_store || '',
-      app_info: appInfo,
+      app_info: record.app_info || [],
       sort: record.sort || 0,
       state: record.state !== undefined ? record.state : 1,
       is_hot: record.is_hot || 0,
