@@ -48,7 +48,7 @@
   });
 
   const [modalRegister, { openModal, closeModal, setSubLoading }] = useModal({
-    title: '新增分组',
+    title: '新增角色',
     subBtuText: '保存',
   });
 

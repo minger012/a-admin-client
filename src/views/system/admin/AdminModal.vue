@@ -63,7 +63,8 @@ const formBtnLoading = ref(false);
 const isEdit = ref(false);
 const roleOptions = ref([]);
 
-const formParams = reactive({
+const formParams: any = reactive({
+  id: null,
   username: '',
   password: '',
   auth_id: null,
@@ -96,7 +97,7 @@ const rules = computed((): FormRules => {
 
 async function loadRoleOptions() {
   try {
-    const res = await getRoleList({ pageSize: 100, page: 1 });
+    const res: any = await getRoleList({ pageSize: 100, page: 1 });
     if (res.code === 1) {
       roleOptions.value = res.data.list.map(item => ({
         label: item.name,
@@ -121,6 +122,7 @@ function openEditModal(record: AdminData) {
   isEdit.value = true;
   resetForm();
   
+  formParams.id = record.id;
   formParams.username = record.username;
   formParams.password = ''; // Don't populate password for security
   formParams.auth_id = record.auth_id;
@@ -130,6 +132,7 @@ function openEditModal(record: AdminData) {
 }
 
 function resetForm() {
+  formParams.id = null;
   formParams.username = '';
   formParams.password = '';
   formParams.auth_id = null;
@@ -157,7 +160,7 @@ function confirmForm() {
       }
       
       const apiCall = modalType.value === 'add' ? addAdmin : editAdmin;
-      const res = await apiCall(params);
+      const res: any = await apiCall(params);
       
       if (res.code === 1) {
         message.success(modalType.value === 'add' ? '添加成功' : '编辑成功');

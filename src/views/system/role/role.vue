@@ -16,7 +16,7 @@
                 <PlusOutlined />
               </n-icon>
             </template>
-            新增分组
+            新增角色
           </n-button>
         </template>
       </BasicTable>
@@ -56,7 +56,7 @@
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
-            style: 'color: #ff4d4f',
+            type: 'error',
           },
         ],
       });
@@ -67,13 +67,11 @@
     const params = {
       pageSize: res.pageSize,
       page: res.page,
-      ...res.searchInfo,
+      rnd: Math.random(),
     };
-    
     try {
-      const response = await getRoleList(params);
+      const response: any = await getRoleList(params);
       const { data } = response;
-      
       return {
         list: data.list || [],
         page: data.page,
@@ -112,16 +110,15 @@
       onPositiveClick: async () => {
         try {
           message.loading('删除中...');
-          const res = await deleteRole(record.name);
-          const { data } = res;
+          const res: any = await deleteRole(record.name);
           
-          if (data.code === 1) {
+          if (res.code == 1) {
             message.success('删除成功');
             reloadTable();
           } else {
-            message.error(data.msg || '删除失败');
+            message.error(res.msg || '删除失败');
           }
-        } catch (error) {
+        } catch (error: any) {
           message.error('删除失败: ' + (error.message || '未知错误'));
         }
       }

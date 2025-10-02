@@ -4,7 +4,7 @@
       <n-tab-pane name="welcome" tab="管理员授权码邀请统计">
         <AdminWelcomeStats />
       </n-tab-pane>
-      <n-tab-pane name="adminProduct" tab="管理员下用户充倽统计">
+      <n-tab-pane name="adminProduct" tab="管理员下用户充值统计">
         <AdminUserRechargeStats />
       </n-tab-pane>
       <n-tab-pane name="adminWithdraw" tab="管理员下用户提现统计">

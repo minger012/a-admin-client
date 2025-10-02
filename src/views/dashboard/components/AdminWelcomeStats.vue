@@ -272,6 +272,7 @@
 
 <style lang="less" scoped>
   .summary-item {
+    margin-right:40px;
     .summary-label {
       font-size: 14px;
       color: #666;

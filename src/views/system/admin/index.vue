@@ -58,7 +58,7 @@
           {
             label: '删除',
             onClick: handleDelete.bind(null, record),
-            style: 'color: #ff4d4f',
+            type: 'error',
             // 不允许删除admin账号
             ifShow: () => record.username !== 'admin',
           },
@@ -70,7 +70,7 @@
   // 加载角色列表并构建映射关系
   async function loadRoles() {
     try {
-      const res = await getRoleList({ pageSize: 100, page: 1 });
+      const res: any = await getRoleList({ pageSize: 100, page: 1 });
       
       if (res.code === 1 && res.data.list) {
         const map: Record<number, string> = {};
@@ -92,7 +92,7 @@
     };
     
     try {
-      const response = await getAdminList(params);
+      const response: any = await getAdminList(params);
       
       // 确保角色映射已加载
       if (Object.keys(roleMap.value).length === 0) {
@@ -148,7 +148,7 @@
       onPositiveClick: async () => {
         try {
           message.loading('删除中...');
-          const res = await deleteAdmin(record.username);
+          const res: any = await deleteAdmin(record.username);
           
           if (res.code === 1) {
             message.success('删除成功');
@@ -156,7 +156,7 @@
           } else {
             message.error(res.msg || '删除失败');
           }
-        } catch (error) {
+        } catch (error: any) {
           message.error('删除失败: ' + (error.message || '未知错误'));
         }
       }

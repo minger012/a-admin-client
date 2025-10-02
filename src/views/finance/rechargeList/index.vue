@@ -1,17 +1,6 @@
 <template>
   <n-card :bordered="false">
-    <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset">
-      <template #stateSlot="{ model, field }">
-        <n-select
-          v-model:value="model[field]"
-          :options="[
-            { label: '全部', value: '' },
-            { label: '未审核', value: 0 },
-            { label: '已审核', value: 1 },
-          ]"
-        />
-      </template>
-    </BasicForm>
+    <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset" />
   </n-card>
   <n-card :bordered="false" class="mt-3">
     <BasicTable
@@ -21,7 +10,7 @@
       ref="actionRef"
       :actionColumn="actionColumn"
       @update:checked-row-keys="onCheckedRow"
-      :scroll-x="1760"
+      :scroll-x="2100"
       :striped="true"
     >
       <template #toolbar>
@@ -35,60 +24,50 @@
   import { h, reactive, ref } from 'vue';
   import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { PlusOutlined } from '@vicons/antd';
-  import { FormRules, useMessage, useDialog, NButton, NPopconfirm } from 'naive-ui';
+  import { useMessage, useDialog } from 'naive-ui';
   import { columns, RechargeListData } from './columns';
   import { getOrderList, deleteOrder } from '@/api/system/order';
-  import { formatToDate, formatToDateTime } from '@/utils/dateUtil';
 
   const message = useMessage();
   const dialog = useDialog();
   const actionRef = ref();
-  const formRef = ref();
-  
-  // 新增表单
-  const formBtnLoading = ref(false);
-
-  // 表单验证规则
-  const rules: FormRules = {
-    username: {
-      required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入用户名',
-    },
-    cardholderName: {
-      required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入持卡人姓名',
-    },
-    rechargeAmount: {
-      required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入充值金额',
-    },
-    type: {
-      required: true,
-      trigger: ['blur', 'change'],
-      message: '请选择类型',
-    },
-  };
 
   // 搜索表单配置
   const schemas: FormSchema[] = [
     {
-      field: 'name',
-      component: 'NInput',
-      label: '姓名',
+      field: 'uid',
+      component: 'NInputNumber',
+      label: '用户ID',
       componentProps: {
-        placeholder: '请输入姓名',
+        placeholder: '请输入用户ID',
+        clearable: true,
       },
     },
     {
-      field: 'admin_name',
+      field: 'username',
       component: 'NInput',
-      label: '操作人',
+      label: '用户账号',
       componentProps: {
-        placeholder: '请输入操作人',
+        placeholder: '请输入用户账号',
+        clearable: true,
+      },
+    },
+    {
+      field: 'admin_username',
+      component: 'NInput',
+      label: '所属管理者',
+      componentProps: {
+        placeholder: '请输入管理员账号',
+        clearable: true,
+      },
+    },
+    {
+      field: 'fb_id',
+      component: 'NInput',
+      label: 'FB_ID',
+      componentProps: {
+        placeholder: '请输入订单号',
+        clearable: true,
       },
     },
     {
@@ -100,9 +79,9 @@
         placeholder: '请选择充值方式',
         options: [
           { label: '全部', value: '' },
-          { label: '后台充值', value: 1 },
-          { label: '会员', value: 2 },
-          { label: '彩金', value: 3 },
+          { label: '真实充值', value: 1 },
+          { label: '虚拟充值', value: 2 },
+          { label: '系统赠送', value: 3 },
         ],
         clearable: true,
       },
@@ -116,35 +95,16 @@
         clearable: true,
       },
     },
-    {
-      field: 'mMoney',
-      component: 'NInputNumber',
-      label: '最小金额',
-      componentProps: {
-        placeholder: '请输入最小金额',
-        clearable: true,
-      },
-    },
-    {
-      field: 'bMoney',
-      component: 'NInputNumber',
-      label: '最大金额',
-      componentProps: {
-        placeholder: '请输入最大金额',
-        clearable: true,
-      },
-    },
   ];
   
   // 搜索参数
   const searchParams = reactive({
-    name: '',
-    admin_name: '',
+    uid: null,
+    username: '',
+    admin_username: '',
+    fb_id: '',
     type: '',
-    state: '',
     timeRange: null,
-    mMoney: null,
-    bMoney: null,
     page: 1,
     pageSize: 10,
   });
@@ -171,39 +131,45 @@
     },
   });
 
-  const [register, { getFieldsValue }] = useForm({
+  const [register] = useForm({
     gridProps: { cols: '1 s:1 m:2 l:3 xl:4 2xl:4' },
-    labelWidth: 80,
+    labelWidth: 100,
     schemas,
   });
 
   const totalMoney = ref('')
 
   // 加载表格数据
-  function loadDataTable(res) {
-    // 合并搜索参数和分页信息
+  async function loadDataTable(res) {
+    // 更新页码和分页大小
     searchParams.page = res.page || 1;
     searchParams.pageSize = res.pageSize || 10;
     
     // 使用searchParams构造请求参数
-    const params = {};
+    const params: any = {};
     
     // 页码和分页大小转为字符串
     params.page = String(searchParams.page);
     params.pageSize = String(searchParams.pageSize);
     
-    // 用户名和操作人
-    if (searchParams.name) {
-      params.name = searchParams.name;
+    // 用户ID
+    if (searchParams.uid !== null && searchParams.uid !== undefined) {
+      params.uid = searchParams.uid;
     }
     
-    if (searchParams.admin_name) {
-      params.admin_name = searchParams.admin_name;
+    // 用户简称
+    if (searchParams.username) {
+      params.username = searchParams.username;
     }
     
-    // 状态
-    if (searchParams.state !== '') {
-      params.state = searchParams.state;
+    // 所属管理者
+    if (searchParams.admin_username) {
+      params.admin_username = searchParams.admin_username;
+    }
+    
+    // FB_ID
+    if (searchParams.fb_id) {
+      params.fb_id = searchParams.fb_id;
     }
     
     // 充值方式
@@ -223,19 +189,10 @@
       }
     }
 
-    // 处理金额范围
-    if (searchParams.mMoney !== null && searchParams.mMoney !== undefined) {
-      params.mMoney = parseInt(searchParams.mMoney);
-    }
-    
-    if (searchParams.bMoney !== null && searchParams.bMoney !== undefined) {
-      params.bMoney = parseInt(searchParams.bMoney);
-    }
-    
     return getOrderList(params)
       .then((response) => {
         const { data } = response;
-        totalMoney.value = data.money
+        totalMoney.value = data.money || '0';
         return {
           list: data.list || [],
           page: data.page,
@@ -258,28 +215,10 @@
     actionRef.value.reload();
   }
 
-  // 处理充值
-  function handleProcess(record: RechargeListData) {
-    message.loading('处理中...');
-    setTimeout(() => {
-      message.success('处理成功');
-      reloadTable();
-    }, 500);
-  }
-
-  // 拒绝充值
-  function handleReject(record: RechargeListData) {
-    message.loading('处理中...');
-    setTimeout(() => {
-      message.success('已拒绝');
-      reloadTable();
-    }, 500);
-  }
-
   // 删除充值记录
   function handleDelete(record: RechargeListData) {
     if (record.state === 1) {
-      message.warning('已审核的充值记录不可删除');
+      message.warning('成功状态的充值记录不可删除');
       return;
     }
     
@@ -311,24 +250,18 @@
   function handleSubmit(values) {
     // 更新搜索参数
     Object.assign(searchParams, values);
-    
-    // 如果值存在在表格中，让其保留在搜索参数中
-    if (values.mMoney !== undefined) searchParams.mMoney = values.mMoney;
-    if (values.bMoney !== undefined) searchParams.bMoney = values.bMoney;
-    
     reloadTable();
   }
 
   // 重置
   function handleReset() {
     // 重置所有搜索参数
-    searchParams.name = '';
-    searchParams.admin_name = '';
+    searchParams.uid = null;
+    searchParams.username = '';
+    searchParams.admin_username = '';
+    searchParams.fb_id = '';
     searchParams.type = '';
-    searchParams.state = '';
     searchParams.timeRange = null;
-    searchParams.mMoney = null;
-    searchParams.bMoney = null;
     reloadTable();
   }
 </script>

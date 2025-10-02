@@ -14,8 +14,8 @@
       :label-width="80"
       class="py-4"
     >
-      <n-form-item label="分组名称" path="name">
-        <n-input placeholder="请输入分组名称" v-model:value="formParams.name" />
+      <n-form-item label="角色名称" path="name">
+        <n-input placeholder="请输入角色名称" v-model:value="formParams.name" />
       </n-form-item>
       <n-form-item label="说明" path="desc">
         <n-input
@@ -48,7 +48,7 @@
 </template>
 
 <script lang="ts" setup>
-import { h, reactive, ref, computed } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { useMessage } from 'naive-ui';
 import { permissionData, authStringToKeys, keysToAuthString } from './permissionData';
 import { addRole, editRole } from '@/api/system/role';
@@ -64,7 +64,12 @@ const formRef = ref();
 const formBtnLoading = ref(false);
 const checkedKeys = ref<string[]>([]);
 
-const formParams = reactive({
+const formParams = reactive<{
+  id: number | null;
+  name: string;
+  desc: string;
+  auth: string;
+}>({
   id: null,
   name: '',
   desc: '',
@@ -72,14 +77,14 @@ const formParams = reactive({
 });
 
 const modalTitle = computed(() => {
-  return modalType.value === 'add' ? '新增分组' : '编辑分组';
+  return modalType.value === 'add' ? '新增角色' : '编辑角色';
 });
 
 const rules: FormRules = {
   name: {
     required: true,
     trigger: ['blur', 'input'],
-    message: '请输入分组名称',
+    message: '请输入角色名称',
   },
 };
 
@@ -138,9 +143,9 @@ function confirmForm() {
         auth: keysToAuthString(checkedKeys.value),
       };
       
-      const res = await apiCall(params);
+      const res: any = await apiCall(params);
       
-      if (res.code === 1) {
+      if (res.code == 1) {
         message.success(modalType.value === 'add' ? '添加成功' : '编辑成功');
         emit('reloadTable');
         closeModal();

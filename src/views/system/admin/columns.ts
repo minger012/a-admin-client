@@ -1,6 +1,7 @@
 import { formatToDateTime } from '@/utils/dateUtil';
 
 export interface AdminData {
+  id: number;
   username: string;
   auth_id: number;
   state: number;
@@ -17,7 +18,7 @@ export const columns = [
     key: 'username',
   },
   {
-    title: '管理员分组',
+    title: '管理员角色',
     key: 'auth_id',
     render(row) {
       return row.role_name || `ID: ${row.auth_id}`;
