@@ -7,7 +7,7 @@ export interface ProductListData {
   id: number;
   sort: number;
   state: number;
-  image: string;
+  image: string[];
   logo: string;
   name: string;
   a_name?: string;
@@ -92,7 +92,7 @@ export const columns: BasicColumn<ProductListData>[] = [
       return h(NImage, {
         width: 50,
         height: 50,
-        src: record.image,
+        src: record.image && record.image[0],
         objectFit: 'cover',
         showToolbarTooltip: true,
       });

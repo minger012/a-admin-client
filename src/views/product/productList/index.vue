@@ -105,15 +105,15 @@
             :action="VITE_GLOB_API_URL_PREFIX+'/admin/file/uploadImage'"
             :default-file-list="fileList"
             list-type="image-card"
-            :max="1"
+            :max="9"
             :on-before-upload="(file) => handleBeforeUpload(file, 'image')"
             name="image"
             :headers="{'Authorization': userStore.getToken}"
             @finish="(e) => handleUploadFinish(e, 'image')"
             @error="handleUploadError"
-            @remove="() => handleRemove('image')"
+            @remove="(options) => handleRemove(options, 'image')"
           >
-            上传产品图片
+            上传产品图片（最多9张）
           </n-upload>
         </n-form-item>
         
@@ -216,7 +216,7 @@
     category: '', // 分类
     intro: '', // 产品简介
     logo: '', // Logo
-    image: '', // 产品图片
+    image: [], // 产品图片（数组）
     google_play: '', // 谷歌商店链接
     app_store: '', // 苹果商店链接
     app_info: [], // 应用信息
@@ -309,7 +309,12 @@
     image: {
       required: true,
       trigger: ['blur', 'change'],
-      message: '请上传产品图片',
+      validator: (rule, value) => {
+        if (!value || (Array.isArray(value) && value.length === 0)) {
+          return new Error('请上传产品图片');
+        }
+        return true;
+      },
     },
     state: {
       required: true,
@@ -395,7 +400,7 @@
       category: '',
       intro: '',
       logo: '',
-      image: '',
+      image: [],
       google_play: '',
       app_store: '',
       app_info: [],
@@ -476,8 +481,27 @@
       if (response.code === 1) {
         // 更新文件状态和URL
         file.url = response.data.url;
-        formParams[type] = response.data.url;
+        
+        // 如果是产品图片（数组类型）
+        if (type === 'image') {
+          if (!Array.isArray(formParams.image)) {
+            formParams.image = [];
+          }
+          formParams.image.push(response.data.url);
+        } else {
+          // Logo是单个字符串
+          formParams[type] = response.data.url;
+        }
+        
         message.success('上传成功');
+        
+        // 触发对应字段的验证，清除错误提示
+        setTimeout(() => {
+          formRef.value?.validate(
+            (errors) => {},
+            (rule) => rule?.key === type
+          );
+        }, 100);
       } else {
         message.error('上传失败: ' + response.msg || '未知错误');
         // 删除上传失败的文件
@@ -509,11 +533,25 @@
   };
   
   // 处理删除
-  const handleRemove = (type: 'image' | 'logo' = 'image') => {
-    formParams[type] = '';
+  const handleRemove = (options: any, type: 'image' | 'logo' = 'image') => {
+    const { file } = options;
+    
     if (type === 'image') {
-      fileList.value = [];
+      // 从图片数组中移除对应的URL
+      if (Array.isArray(formParams.image) && file.url) {
+        const index = formParams.image.indexOf(file.url);
+        if (index > -1) {
+          formParams.image.splice(index, 1);
+        }
+      }
+      // 从文件列表中移除
+      const fileIndex = fileList.value.findIndex(f => f.id === file.id);
+      if (fileIndex > -1) {
+        fileList.value.splice(fileIndex, 1);
+      }
     } else {
+      // Logo处理（单个）
+      formParams[type] = '';
       logoFileList.value = [];
     }
   };
@@ -551,7 +589,7 @@
           image: formParams.image,
           google_play: formParams.google_play,
           app_store: formParams.app_store,
-          app_info: JSON.stringify(formParams.app_info || []),
+          app_info: formParams.app_info,
           sort: formParams.sort,
           state: formParams.state,
           is_hot: formParams.is_hot,
@@ -600,7 +638,7 @@
       category: record.category || '',
       intro: record.intro || '',
       logo: record.logo || '',
-      image: record.image || '',
+      image: Array.isArray(record.image) ? record.image : (record.image ? [record.image] : []),
       google_play: record.google_play || '',
       app_store: record.app_store || '',
       app_info: record.app_info || [],
@@ -610,13 +648,28 @@
       is_home: record.is_home || 0
     });
     
-    // 设置产品图片
-    fileList.value = record.image ? [{
-      id: '1',
-      name: '产品图片',
-      status: 'finished',
-      url: record.image
-    }] : [];
+    // 设置产品图片（支持数组）
+    if (record.image) {
+      // 如果是数组，则遍历创建文件列表
+      if (Array.isArray(record.image)) {
+        fileList.value = record.image.map((url, index) => ({
+          id: String(index + 1),
+          name: `产品图片${index + 1}`,
+          status: 'finished',
+          url: url
+        }));
+      } else {
+        // 如果是字符串，兼容旧数据
+        fileList.value = [{
+          id: '1',
+          name: '产品图片',
+          status: 'finished',
+          url: record.image
+        }];
+      }
+    } else {
+      fileList.value = [];
+    }
     
     // 设置Logo图片
     logoFileList.value = record.logo ? [{

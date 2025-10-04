@@ -62,9 +62,6 @@
       <n-form-item label="客服类型" path="service_type">
         <n-input-number v-model:value="formParams.service_type" :min="0" style="width: 100%" />
       </n-form-item>
-      <n-form-item label="代运营ID" path="operate">
-        <n-input placeholder="请输入代运营ID" v-model:value="formParams.operate" />
-      </n-form-item>
       <n-form-item label="备注" path="remarks">
         <n-input
           type="textarea"
@@ -141,12 +138,7 @@
       required: true,
       message: '请输入Facebook ID',
       trigger: ['blur', 'input'],
-    },
-    operate: {
-      required: true,
-      message: '请输入代运营ID',
-      trigger: ['blur', 'input'],
-    },
+    }
   };
 
   watch(() => props.visible, (val) => {
