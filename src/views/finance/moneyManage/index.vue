@@ -14,18 +14,25 @@
       :request="loadDataTable"
       :row-key="(row:FlowListData) => row.id"
       ref="actionRef"
+      v-model:checked-row-keys="checkedRowKeys"
       :scroll-x="1800"
       :striped="true"
     >
       <template #tableTitle>
-        <n-space>
-          <n-button type="primary" @click="exportData" v-if="false">
+        <n-space class="flex items-center">
+          <n-button @click="handleExport">
             <template #icon>
               <n-icon>
                 <DownloadOutlined />
               </n-icon>
             </template>
-            导出数据
+            导出
+          </n-button>
+          <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+            已选 {{ checkedRowKeys.length }} 项
+          </span>
+          <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+            清除
           </n-button>
         </n-space>
       </template>
@@ -76,12 +83,14 @@
   import { DownloadOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
+  import * as XLSX from 'xlsx';
 
   const message = useMessage();
   const actionRef = ref();
   const formRef = ref();
   const showEditModal = ref(false);
   const formBtnLoading = ref(false);
+  const checkedRowKeys = ref<Array<number>>([]);
 
   interface SearchFormType {
     uid?: string | number;
@@ -237,6 +246,85 @@
 
   function reloadTable() {
     actionRef.value.reload();
+  }
+
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
+  // 导出到Excel
+  async function handleExport() {
+    let exportData: FlowListData[] = [];
+    
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: FlowListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999',
+          ...searchForm,
+        };
+        
+        // 处理时间范围
+        if (params.timeRange && params.timeRange.length === 2) {
+          const startDate = params.timeRange[0] instanceof Date ? params.timeRange[0] : new Date(params.timeRange[0]);
+          const endDate = params.timeRange[1] instanceof Date ? params.timeRange[1] : new Date(params.timeRange[1]);
+          
+          if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+            params.sTime = Math.floor(startDate.getTime() / 1000);
+            params.eTime = Math.floor(endDate.getTime() / 1000);
+          }
+          delete params.timeRange;
+        }
+        
+        const res: any = await flowList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
+      }
+    }
+    
+    if (exportData.length === 0) {
+      message.warning('没有数据可导出');
+      return;
+    }
+    
+    exportToExcel(exportData);
+  }
+
+  // 导出Excel文件
+  function exportToExcel(data: FlowListData[]) {
+    const typeMap = { 1: '充值', 2: '提现', 3: '购物', 4: '退款', 5: '系统调整' };
+    
+    const excelData = data.map(item => ({
+      'ID': item.id,
+      '用户ID': item.uid,
+      '用户简称': item.username || '-',
+      'FB_ID': item.fb_id || '-',
+      '所属管理者': item.admin_username || '-',
+      '订单号': item.order_no || '-',
+      '交易类型': typeMap[item.type] || '-',
+      '变动金额': item.cha > 0 ? `+${item.cha}` : item.cha,
+      '备注': item.remarks || '-',
+      '创建时间': item.create_time ? new Date(item.create_time * 1000).toLocaleString() : '-',
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '资金明细');
+    
+    const fileName = `资金明细_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    
+    message.success(`导出成功，共 ${data.length} 条数据`);
   }
 
   // 编辑备注

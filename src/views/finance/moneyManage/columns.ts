@@ -34,7 +34,7 @@ export const typeOptions = [
 export const chaOptions = [
   { label: '全部', value: '' },
   { label: '增加', value: 1 },
-  { label: '扣除', value: 2 },
+  { label: '减少', value: 2 },
 ];
 
 // 交易类型渲染
@@ -68,16 +68,20 @@ function renderCha(cha: number) {
   return h(
     NTag,
     {
-      type: cha === 1 ? 'success' : 'error',
+      type: cha > 0 ? 'success' : 'error',
       bordered: false,
     },
     {
-      default: () => (cha === 1 ? '增加' : '扣除'),
+      default: () => (cha > 0 ? '增加' : '减少'),
     }
   );
 }
 
 export const columns = [
+  {
+    type: 'selection',
+    fixed: 'left',
+  },
   {
     title: 'ID',
     key: 'id',
@@ -108,7 +112,7 @@ export const columns = [
     key: 'money',
     width: 120,
     render(row) {
-      return `${row.money} 元`;
+      return `${row.cha}`;
     },
   },
   {

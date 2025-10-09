@@ -44,6 +44,10 @@ export const stateOptions = [
 
 export const columns: BasicColumn<WithdrawalListData>[] = [
   {
+    type: 'selection',
+    fixed: 'left',
+  },
+  {
     title: 'ID',
     width: 80,
     key: 'id',

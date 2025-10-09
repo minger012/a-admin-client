@@ -9,6 +9,7 @@
       :row-key="(row:WithdrawalListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
+      v-model:checked-row-keys="checkedRowKeys"
       :scroll-x="1800"
       :striped="true"
     >
@@ -21,6 +22,12 @@
               </n-icon>
             </template>
             导出
+          </n-button>
+          <span class="text-gray-500" v-if="checkedRowKeys.length > 0">
+            已选 {{ checkedRowKeys.length }} 项
+          </span>
+          <n-button v-if="checkedRowKeys.length > 0" text type="primary" @click="handleClearSelection">
+            清除
           </n-button>
         </n-space>
       </template>
@@ -103,6 +110,7 @@
   const message = useMessage();
   const actionRef = ref();
   const editFormRef = ref();
+  const checkedRowKeys = ref<Array<number>>([]);
 
   // 搜索表单配置
   const schemas: FormSchema[] = [
@@ -330,28 +338,42 @@
     }
   }
 
+  // 清除选中
+  function handleClearSelection() {
+    checkedRowKeys.value = [];
+  }
+
   // 导出
   async function handleExport() {
     let exportData: WithdrawalListData[] = [];
 
-    try {
-      const params: any = {
-        page: '1',
-        pageSize: '999999',
-        ...searchForm.value,
-      };
+    if (checkedRowKeys.value.length > 0) {
+      // 导出已选中的数据
+      const tableData = actionRef.value.getDataSource();
+      exportData = tableData.filter((item: WithdrawalListData) => 
+        checkedRowKeys.value.includes(item.id)
+      );
+    } else {
+      // 导出全部数据，请求接口获取
+      try {
+        const params: any = {
+          page: '1',
+          pageSize: '999999',
+          ...searchForm.value,
+        };
 
-      if (params.dateRange && params.dateRange.length === 2) {
-        params.sTime = Math.floor(params.dateRange[0] / 1000);
-        params.eTime = Math.floor(params.dateRange[1] / 1000);
-        delete params.dateRange;
+        if (params.dateRange && params.dateRange.length === 2) {
+          params.sTime = Math.floor(params.dateRange[0] / 1000);
+          params.eTime = Math.floor(params.dateRange[1] / 1000);
+          delete params.dateRange;
+        }
+
+        const res: any = await getWithdrawList(params);
+        exportData = res.data.list || [];
+      } catch (error) {
+        message.error('获取数据失败');
+        return;
       }
-
-      const res: any = await getWithdrawList(params);
-      exportData = res.data.list || [];
-    } catch (error) {
-      message.error('获取数据失败');
-      return;
     }
 
     if (exportData.length === 0) {
