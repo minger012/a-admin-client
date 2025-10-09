@@ -35,3 +35,12 @@ export function couponDel(id) {
     meta: { isReturnNativeResponse: true },
   });
 }
+
+/**
+ * @description: 用户优惠券列表
+ */
+export function userCouponList(params) {
+  return Alova.Post('/admin/userCoupon/list', params, {
+    meta: { isReturnNativeResponse: true },
+  });
+}

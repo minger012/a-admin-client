@@ -100,8 +100,6 @@ export const Alova = createAlova({
       // @ts-ignore
       const Message = window.$message;
       
-
-      
       if (ResultEnum.SUCCESS === code) {
         return result;
       }
