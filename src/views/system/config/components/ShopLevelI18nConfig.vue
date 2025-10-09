@@ -31,8 +31,11 @@
 
 <script lang="ts" setup>
 import { h, ref } from 'vue';
-import { NButton, NInput, NInputNumber, NIcon } from 'naive-ui';
+import { NButton, NInput, NInputNumber, NIcon, useMessage } from 'naive-ui';
 import { PlusOutlined } from '@vicons/antd';
+import { uploadImage } from '@/api/file';
+
+const message = useMessage();
 
 interface ShopLevelI18nItem {
   level: string;
@@ -67,6 +70,8 @@ const languageOptions = [
 ];
 
 const currentLang = ref('ja-ja');
+const uploadingIndex = ref<number | null>(null); // 正在上传的索引
+const needReorder = ref(false); // 是否需要重新排序
 
 // 表格列定义
 const columns = [
@@ -118,16 +123,32 @@ const columns = [
   { 
     title: '图标', 
     key: 'icon', 
-    width: 150,
-    render: (row: ShopLevelI18nItem) => {
-      return h(NInput, {
-        value: row.icon,
-        onUpdateValue: (v) => {
-          row.icon = v;
-          updateData();
-        },
-        placeholder: '图标URL'
-      });
+    width: 200,
+    render: (row: ShopLevelI18nItem, index: number) => {
+      return h('div', { class: 'flex items-center gap-2' }, [
+        row.icon ? h('img', {
+          src: row.icon,
+          style: { width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }
+        }) : h('div', {
+          style: {
+            width: '60px',
+            height: '60px',
+            border: '1px dashed #ccc',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#999',
+            fontSize: '12px'
+          }
+        }, '无图标'),
+        h(NButton, {
+          size: 'small',
+          disabled: uploadingIndex.value !== null,
+          loading: uploadingIndex.value === index,
+          onClick: () => handleUploadIcon(index)
+        }, { default: () => '上传' })
+      ]);
     }
   },
   { 
@@ -137,9 +158,20 @@ const columns = [
     render: (row: ShopLevelI18nItem) => {
       return h(NInputNumber, {
         value: row.sort,
+        showButton: false,
         onUpdateValue: (v) => {
           row.sort = v ?? 0;
+          needReorder.value = true;
           updateData();
+        },
+        onBlur: () => {
+          if (needReorder.value) {
+            needReorder.value = false;
+            // 延迟执行排序，确保数据已更新
+            setTimeout(() => {
+              updateData();
+            }, 0);
+          }
         },
         min: 0,
         style: { width: '100%' }
@@ -151,7 +183,7 @@ const columns = [
     key: 'action', 
     width: 100, 
     fixed: 'right' as const,
-    render: (row: ShopLevelI18nItem, index: number) => {
+    render: (_row: ShopLevelI18nItem, index: number) => {
       return h(NButton, {
         text: true,
         type: 'error',
@@ -174,12 +206,66 @@ function getCurrentLangData() {
     emit('update:modelValue', newData);
     return [];
   }
-  return props.modelValue[currentLang.value] || [];
+  
+  // 如果正在编辑排序，不排序；否则按排序值排序
+  const data = props.modelValue[currentLang.value] || [];
+  if (needReorder.value) {
+    return data;
+  }
+  return [...data].sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 
 // 更新数据
 function updateData() {
   emit('update:modelValue', { ...props.modelValue });
+}
+
+// 上传图标
+function handleUploadIcon(index: number) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/gif';
+  
+  input.onchange = async (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // 验证文件类型
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      message.error('只能上传jpg/png/gif格式的图片');
+      return;
+    }
+    
+    // 验证文件大小（2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      message.error('图片大小不能超过2MB');
+      return;
+    }
+    
+    // 上传文件
+    try {
+      uploadingIndex.value = index;
+      message.loading('上传中...');
+      
+      const result: any = await uploadImage(file);
+      
+      if (result.code === 1) {
+        const currentData = props.modelValue[currentLang.value] || [];
+        currentData[index].icon = result.data.url;
+        updateData();
+        message.success('上传成功');
+      } else {
+        message.error(result.msg || '上传失败');
+      }
+    } catch (error) {
+      console.error('上传错误:', error);
+      message.error('上传失败');
+    } finally {
+      uploadingIndex.value = null;
+    }
+  };
+  
+  input.click();
 }
 
 // 添加阶梯

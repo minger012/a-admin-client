@@ -549,6 +549,7 @@
     width: 100%;
     z-index: 11;
     border-bottom: 1px solid #efefef;
+    background-color: #f9f9f9;
     /* 图标和计数器的样式 */
     .icon-wrapper {
       position: relative;

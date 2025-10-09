@@ -26,17 +26,33 @@
       :scroll-x="1200"
     />
   </div>
+
+  <!-- 富文本编辑弹窗 -->
+  <n-modal v-model:show="showRichEditorModal" preset="card" title="编辑富文本内容" style="width: 900px;">
+    <QuillEditor
+      ref="quillEditorRef"
+      :options="editorOptions"
+      v-model:content="richEditorContent"
+      content-type="html"
+      style="height: 400px"
+    />
+    <template #footer>
+      <n-space justify="end">
+        <n-button @click="showRichEditorModal = false">取消</n-button>
+        <n-button type="primary" @click="handleSaveRichContent">确定</n-button>
+      </n-space>
+    </template>
+  </n-modal>
 </template>
 
 <script lang="ts" setup>
-import { h, ref } from 'vue';
-import { NButton, NInput, NInputNumber, NIcon, useMessage } from 'naive-ui';
+import { h, ref, reactive } from 'vue';
+import { NButton, NInput, NInputNumber, NSelect, NIcon, useMessage } from 'naive-ui';
 import { PlusOutlined } from '@vicons/antd';
-import { getAppEnvConfig } from '@/utils/env';
-import { useUser } from '@/store/modules/user';
+import { uploadImage } from '@/api/file';
+import { QuillEditor } from '@vueup/vue-quill';
+import '@vueup/vue-quill/dist/vue-quill.snow.css';
 
-const { VITE_GLOB_API_URL_PREFIX } = getAppEnvConfig();
-const userStore = useUser();
 const message = useMessage();
 
 interface BannerItem {
@@ -44,8 +60,9 @@ interface BannerItem {
   image: string;
   title: string;
   desc: string;
-  type: string;
+  type: number;
   data: string;
+  richContent?: string; // 富文本内容
 }
 
 interface BannerData {
@@ -73,6 +90,96 @@ const languageOptions = [
 ];
 
 const currentLang = ref('ja-ja');
+const uploadingIndex = ref<number | null>(null); // 正在上传的索引
+const needReorder = ref(false); // 是否需要重新排序
+
+// 富文本编辑
+const showRichEditorModal = ref(false);
+const currentEditIndex = ref<number>(0);
+const richEditorContent = ref('');
+const quillEditorRef = ref();
+
+// Quill编辑器配置
+const editorOptions = reactive({
+  modules: {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [{ header: 1 }, { header: 2 }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ indent: '-1' }, { indent: '+1' }],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ color: [] }, { background: [] }],
+      [{ align: [] }],
+      ['clean'],
+      ['image', 'link'],
+    ],
+  },
+  theme: 'snow',
+  placeholder: '请输入内容...',
+});
+
+// 更新数据
+function updateData() {
+  emit('update:modelValue', { ...props.modelValue });
+}
+
+// 编辑富文本
+function handleEditRichContent(index: number) {
+  const currentData = props.modelValue[currentLang.value] || [];
+  currentEditIndex.value = index;
+  richEditorContent.value = currentData[index].richContent || '';
+  showRichEditorModal.value = true;
+}
+
+// 上传图片
+function handleUploadImage(index: number) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/jpeg,image/png,image/gif';
+  
+  input.onchange = async (e: any) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // 验证文件类型
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      message.error('只能上传jpg/png/gif格式的图片');
+      return;
+    }
+    
+    // 验证文件大小（2MB）
+    if (file.size > 2 * 1024 * 1024) {
+      message.error('图片大小不能超过2MB');
+      return;
+    }
+    
+    // 上传文件
+    try {
+      uploadingIndex.value = index;
+      message.loading('上传中...');
+      
+      const result: any = await uploadImage(file);
+      
+      if (result.code === 1) {
+        const currentData = props.modelValue[currentLang.value] || [];
+        currentData[index].image = result.data.url;
+        updateData();
+        message.success('上传成功');
+      } else {
+        message.error(result.msg || '上传失败');
+      }
+    } catch (error) {
+      console.error('上传错误:', error);
+      message.error('上传失败');
+    } finally {
+      uploadingIndex.value = null;
+    }
+  };
+  
+  input.click();
+}
 
 // 表格列定义
 const columns = [
@@ -83,9 +190,20 @@ const columns = [
     render: (row: BannerItem) => {
       return h(NInputNumber, {
         value: row.sort,
+        showButton:false,
         onUpdateValue: (v) => {
           row.sort = v ?? 0;
+          needReorder.value = true;
           updateData();
+        },
+        onBlur: () => {
+          if (needReorder.value) {
+            needReorder.value = false;
+            // 延迟执行排序，确保数据已更新
+            setTimeout(() => {
+              updateData();
+            }, 0);
+          }
         },
         min: 0,
         style: { width: '100%' }
@@ -116,6 +234,8 @@ const columns = [
         }, '无图片'),
         h(NButton, {
           size: 'small',
+          disabled: uploadingIndex.value !== null,
+          loading: uploadingIndex.value === index,
           onClick: () => handleUploadImage(index)
         }, { default: () => '上传' })
       ]);
@@ -156,13 +276,18 @@ const columns = [
     key: 'type', 
     width: 150,
     render: (row: BannerItem) => {
-      return h(NInput, {
+      return h(NSelect, {
         value: row.type,
         onUpdateValue: (v) => {
           row.type = v;
           updateData();
         },
-        placeholder: '路径'
+        options: [
+          { label: '路径', value: 1 },
+          { label: '链接', value: 2 },
+          { label: '富文本', value: 3 }
+        ],
+        placeholder: '请选择类型'
       });
     }
   },
@@ -170,14 +295,22 @@ const columns = [
     title: '数据', 
     key: 'data', 
     width: 200,
-    render: (row: BannerItem) => {
+    render: (row: BannerItem, index: number) => {
+      // 如果是富文本类型，显示编辑按钮
+      if (row.type === 3) {
+        return h(NButton, {
+          size: 'small',
+          onClick: () => handleEditRichContent(index)
+        }, { default: () => '编辑' });
+      }
+      // 其他类型显示输入框
       return h(NInput, {
         value: row.data,
         onUpdateValue: (v) => {
           row.data = v;
           updateData();
         },
-        placeholder: '/path'
+        placeholder: row.type === 1 ? '/path' : 'https://...'
       });
     }
   },
@@ -209,13 +342,16 @@ function getCurrentLangData() {
     emit('update:modelValue', newData);
     return [];
   }
-  return props.modelValue[currentLang.value] || [];
+  
+  // 如果正在编辑排序，不排序；否则按排序值排序
+  const data = props.modelValue[currentLang.value] || [];
+  if (needReorder.value) {
+    return data;
+  }
+  return [...data].sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
 
-// 更新数据
-function updateData() {
-  emit('update:modelValue', { ...props.modelValue });
-}
+
 
 // 添加Banner
 function handleAdd() {
@@ -225,8 +361,9 @@ function handleAdd() {
     image: '',
     title: '',
     desc: '',
-    type: '路径',
-    data: ''
+    type: 1, // 默认为路径
+    data: '',
+    richContent: ''
   };
   
   const newData = {
@@ -234,6 +371,15 @@ function handleAdd() {
     [currentLang.value]: [...currentData, newItem]
   };
   emit('update:modelValue', newData);
+}
+
+// 保存富文本
+function handleSaveRichContent() {
+  const currentData = props.modelValue[currentLang.value] || [];
+  currentData[currentEditIndex.value].richContent = richEditorContent.value;
+  updateData();
+  showRichEditorModal.value = false;
+  message.success('保存成功');
 }
 
 // 删除Banner
@@ -246,61 +392,7 @@ function handleRemove(index: number) {
   emit('update:modelValue', newData);
 }
 
-// 上传图片
-function handleUploadImage(index: number) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/jpeg,image/png,image/gif';
-  
-  input.onchange = async (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    // 验证文件类型
-    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-      message.error('只能上传jpg/png/gif格式的图片');
-      return;
-    }
-    
-    // 验证文件大小（2MB）
-    if (file.size > 2 * 1024 * 1024) {
-      message.error('图片大小不能超过2MB');
-      return;
-    }
-    
-    // 上传文件
-    const formData = new FormData();
-    formData.append('image', file);
-    
-    try {
-      message.loading('上传中...');
-      
-      const response = await fetch(VITE_GLOB_API_URL_PREFIX + '/admin/file/uploadImage', {
-        method: 'POST',
-        headers: {
-          'Authorization': userStore.getToken
-        },
-        body: formData
-      });
-      
-      const result = await response.json();
-      
-      if (result.code === 1) {
-        const currentData = getCurrentLangData();
-        currentData[index].image = result.data.url;
-        updateData();
-        message.success('上传成功');
-      } else {
-        message.error(result.msg || '上传失败');
-      }
-    } catch (error) {
-      console.error('上传错误:', error);
-      message.error('上传失败');
-    }
-  };
-  
-  input.click();
-}
+
 </script>
 
 <style lang="less" scoped>

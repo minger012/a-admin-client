@@ -20,13 +20,13 @@
 
 <script lang="ts" setup>
 import { h } from 'vue';
-import { NButton, NInput, NIcon } from 'naive-ui';
+import { NButton, NInput, NSelect, NIcon } from 'naive-ui';
 import { PlusOutlined } from '@vicons/antd';
 
 interface ServiceLink {
   label: string;
   link: string;
-  type: string;
+  type: number;
 }
 
 interface Props {
@@ -81,13 +81,17 @@ const columns = [
     key: 'type', 
     width: 150,
     render: (row: ServiceLink) => {
-      return h(NInput, {
+      return h(NSelect, {
         value: row.type,
         onUpdateValue: (v) => {
           row.type = v;
           emit('update:modelValue', props.modelValue);
         },
-        placeholder: '请输入类型'
+        options: [
+          { label: '内嵌', value: 1 },
+          { label: '跳转app', value: 2 }
+        ],
+        placeholder: '请选择类型'
       });
     }
   },
@@ -112,7 +116,7 @@ function handleAdd() {
   const newData = [...baseData, {
     label: '',
     link: '',
-    type: '跳转app'
+    type: 2 // 默认为跳转app
   }];
   emit('update:modelValue', newData);
 }

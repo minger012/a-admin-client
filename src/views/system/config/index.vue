@@ -193,7 +193,8 @@ loadConfig();
 </script>
 
 <style lang="less" scoped>
-.mt-8 {
-  margin-top: 32px;
+.config-container{
+  max-width: 1200px;
+  margin: 0 auto;
 }
 </style>
