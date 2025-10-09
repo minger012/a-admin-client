@@ -61,6 +61,9 @@
       :user-data="currentUser"
       @success="handleModalSuccess"
     />
+
+    <!-- 派单组件 -->
+    <DispatchOrder ref="dispatchOrderRef" :uid="currentUserId" />
   </n-card>
 </template>
 
@@ -78,10 +81,13 @@
   import RechargeModal from './components/RechargeModal.vue';
   import DeductModal from './components/DeductModal.vue';
   import SendCouponModal from './components/SendCouponModal.vue';
+  import DispatchOrder from '@/components/DispatchOrder/index.vue';
 
   const message = useMessage();
   const actionRef = ref();
   const currentUser = ref<any>(null);
+  const dispatchOrderRef = ref();
+  const currentUserId = ref(0);
 
   // 各种弹窗状态
   const showEditModal = ref(false);
@@ -229,6 +235,12 @@
             size: 'small',
             onClick: () => handleSendCoupon(record),
           }, { default: () => '发优惠券' }),
+          h(NButton, {
+            text: true,
+            type: 'info',
+            size: 'small',
+            onClick: () => handleDispatch(record),
+          }, { default: () => '派单' }),
         ]
       });
     },
@@ -322,6 +334,12 @@
   function handleSendCoupon(record: MemberListData) {
     currentUser.value = record;
     showCouponModal.value = true;
+  }
+
+  // 派单
+  function handleDispatch(record: MemberListData) {
+    currentUserId.value = record.id;
+    dispatchOrderRef.value?.open();
   }
 
   // 弹窗操作成功后的回调

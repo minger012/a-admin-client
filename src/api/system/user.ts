@@ -131,3 +131,14 @@ export function userAddCoupon(params) {
   });
 }
 
+/**
+ * @description: 派单
+ */
+export function addPlanOrder(params) {
+  return Alova.Post('/admin/user/addPlanOrder', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
+
