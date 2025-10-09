@@ -56,10 +56,21 @@ export function auditWithdraw(params) {
 }
 
 /**
- * @description: 审核提现新接口
+ * @description: 审核提现（编辑状态和备注）
  */
 export function withdrawAudit(params) {
-  return Alova.Post('/admin/withdraw/withdrawAudit', params, {
+  return Alova.Post('/admin/withdraw/audit', params, {
+    meta: {
+      isReturnNativeResponse: true,
+    },
+  });
+}
+
+/**
+ * @description: 编辑提现记录
+ */
+export function editWithdraw(params) {
+  return Alova.Post('/admin/withdraw/edit', params, {
     meta: {
       isReturnNativeResponse: true,
     },

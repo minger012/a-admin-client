@@ -1,219 +1,156 @@
 import { h } from 'vue';
-import { NTag, NIcon } from 'naive-ui';
-import { EditOutlined } from '@vicons/antd';
+import { NTag, NButton } from 'naive-ui';
 import { BasicColumn } from '@/components/Table';
+
 export interface WithdrawalListData {
   id: number;
-  username: string;
-  name: string;
-  bank: string;
-  card: string;
-  k_name: string;
-  fps: string;
-  pix: string;
+  uid: number;
+  admin_id: number;
+  fb_id: string;
   money: number;
-  before_money: number;
-  type: number; // 类型1人工2会员
-  remarks: string;
-  state: number; // 状态1审核成功0未审核
-  system_remarks: string;
-  create_time: string;
-  admin_name: string;
-  lock: number; // 是否锁单1是0否
-  audit_time?: number; // 审核时间
+  remarks: string | null;
+  user_remarks: string | null;
+  methods: string;
+  currency: string;
+  address: string;
+  state: number; // 0待审核 1成功 2驳回
+  update_time: number;
+  create_time: number;
+  username: string;
+  admin_username?: string; // 管理员账号
 }
 
-// Status mapping
+// 状态映射
 const statusMap = {
-  0: '未审核',
-  1: '审核成功',
-  2: '审核驳回'
+  0: '待审核',
+  1: '成功',
+  2: '驳回'
 };
 
-// Status color mapping
+// 状态颜色映射
 const statusColorMap = {
   0: 'warning',
   1: 'success',
   2: 'error'
 };
 
-// Type mapping
-const typeMap = {
-  1: '人工',
-  2: '会员',
-};
+// 状态选项
+export const stateOptions = [
+  { label: '全部', value: '' },
+  { label: '待审核', value: 0 },
+  { label: '成功', value: 1 },
+  { label: '驳回', value: 2 },
+];
 
 export const columns: BasicColumn<WithdrawalListData>[] = [
   {
-    title: '序号',
-    width: 100,
+    title: 'ID',
+    width: 80,
     key: 'id',
   },
   {
-    title: '账号',
+    title: '用户ID',
+    width: 100,
+    key: 'uid',
+  },
+  {
+    title: '用户简称',
     width: 120,
     key: 'username',
   },
   {
-    title: '持卡人姓名',
+    title: 'FB_ID',
+    width: 180,
+    key: 'fb_id',
+  },
+  {
+    title: '所属管理者',
     width: 120,
-    key: 'name',
-  },
-  {
-    title: '银行',
-    width: 200,
-    key: 'card',
+    key: 'admin_username',
     render(row) {
-      return h('span', {
-        style:{
-          wordBreak: 'break-all',
-        }
-      }, { default: () => (row.bank || '--') });
+      return h('span', {}, { default: () => row.admin_username || '-' });
     },
   },
   {
-    title: '卡号',
-    width: 200,
-    key: 'card',
+    title: '提现方式',
+    width: 120,
+    key: 'methods',
     render(row) {
-      return h('span', {
-        style:{
-          wordBreak: 'break-all',
+      return h(NButton, {
+        text: true,
+        type: 'primary',
+        onClick: () => {
+          window.dispatchEvent(new CustomEvent('view-withdraw-method', { detail: row }));
         }
-      }, { default: () => row.card });
+      }, { default: () => '查看' });
     },
   },
-  
- 
   {
-    title: '提现金额',
+    title: '涉及金额',
     width: 120,
     key: 'money',
-    render(record) {
-      return h('span', {
-        style:{
-          color:'red'
-        }
-      }, { default: () => `${record.money.toFixed(2)}` });
+    render(row) {
+      return h('span', {}, { default: () => row.money.toFixed(2) });
     },
   },
   {
-    title: '提现前金额',
-    width: 120,
-    key: 'before_money',
-    render(record) {
-      return h('span', {}, { default: () => `${record.before_money.toFixed(2)}` });
+    title: '后台备注',
+    width: 180,
+    key: 'remarks',
+    ellipsis: {
+      tooltip: true
+    },
+    render(row) {
+      return h('span', {}, { default: () => row.remarks || '-' });
     },
   },
   {
-    title: '提现后金额',
-    width: 120,
-    key: 'after_money',
-    render(record) {
-      const afterAmount = Number(record.before_money) - Number(record.money);
-      return h('span', {}, { default: () => `${afterAmount.toFixed(2)}` });
+    title: '用户端备注',
+    width: 180,
+    key: 'user_remarks',
+    ellipsis: {
+      tooltip: true
     },
-  },
-  {
-    title: '类型',
-    width: 100,
-    key: 'type',
-    render(record) {
-      return h('span', {}, { default: () => typeMap[record.type] || '' });
-    },
-  },
-  {
-    title: '系统备注',
-    width: 200,
-    key: 'system_remarks',
-    render(record) {
-      return h('div', { style: { display: 'flex', alignItems: 'center' } }, [
-        h('span', { 
-          style: { 
-            flex: 1, 
-            wordBreak: 'break-word', 
-            whiteSpace: 'normal', 
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          } 
-        }, record.system_remarks || '--'),
-        h(NIcon, { 
-          size: 16,
-          style: { cursor: 'pointer', marginLeft: '5px', color: '#2080f0', flexShrink: 0 },
-          onClick: (e) => {
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('edit-system-remarks', { detail: record }));
-          }
-        }, {
-          default: () => h(EditOutlined)
-        })
-      ]);
+    render(row) {
+      return h('span', {}, { default: () => row.user_remarks || '-' });
     },
   },
   {
     title: '状态',
     width: 100,
     key: 'state',
-    render(record) {
+    fixed:"right",
+    render(row) {
       return h(
         NTag,
         {
-          type: statusColorMap[record.state],
+          type: statusColorMap[row.state],
+          bordered: false,
         },
         {
-          default: () => statusMap[record.state],
+          default: () => statusMap[row.state],
         }
       );
     },
   },
   {
-    title: '操作人',
-    key: 'admin_name',
-    width: 120,
-  },
-  {
-    title: '备注信息',
+    title: '更新时间',
+    key: 'update_time',
     width: 160,
-    key: 'remarks',
+    render(row) {
+      return h('span', {}, { 
+        default: () => row.update_time ? new Date(row.update_time * 1000).toLocaleString() : '-'
+      });
+    },
   },
   {
     title: '创建时间',
     key: 'create_time',
     width: 160,
-    render(record) {
-      // Convert timestamp to formatted date if needed
-      const date = new Date(record.create_time * 1000); // Convert to milliseconds
+    render(row) {
       return h('span', {}, { 
-        default: () => date.toLocaleString() 
+        default: () => new Date(row.create_time * 1000).toLocaleString()
       });
-    },
-  },
-  {
-    title: '审核时间',
-    key: 'audit_time',
-    width: 160,
-    render(record) {
-      // Convert timestamp to formatted date if needed
-      const date = record.audit_time ? new Date(record.audit_time * 1000) : '-'; // Convert to milliseconds
-      return h('span', {}, { 
-        default: () => date.toLocaleString() 
-      });
-    },
-  },
-  {
-    title: '是否锁单',
-    key: 'lock',
-    width: 100,
-    render(record) {
-      return h(
-        NTag,
-        {
-          type: record.lock === 1 ? 'error' : 'success',
-        },
-        {
-          default: () => (record.lock === 1 ? '已锁定' : '未锁定'),
-        }
-      );
     },
   },
 ];
