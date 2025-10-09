@@ -355,8 +355,13 @@
     },
     goods_id: {
       required: true,
-      trigger: ['blur', 'input'],
-      message: '请输入产品ID',
+      trigger: ['blur', 'change'],
+      validator: (rule, value) => {
+        if (value === null || value === undefined || value === '') {
+          return new Error('请选择产品');
+        }
+        return true;
+      },
     },
     image: {
       required: true,
@@ -634,9 +639,9 @@
           goods_id: formParams.goods_id,
           intro: formParams.intro,
           image: formParams.image,
-          content: JSON.stringify(formParams.content || []),
-          orienteering: JSON.stringify(formParams.orienteering || []),
-          rule: JSON.stringify(formParams.rule || []),
+          content: formParams.content || [],
+          orienteering: formParams.orienteering || [],
+          rule: formParams.rule || [],
           state: formParams.state
         };
         
