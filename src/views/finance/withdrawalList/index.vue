@@ -29,9 +29,9 @@
 
   <!-- 查看提现方式详情弹窗 -->
   <n-modal v-model:show="showMethodModal" preset="card" title="提现方式详情" style="width: 500px;">
-    <n-descriptions bordered :column="1">
+    <n-descriptions bordered :column="1" label-placement="left" :label-style="{ width: '100px' }">
       <n-descriptions-item label="提现方式">
-        {{ methodDetail.methods }}
+        {{ getMethodsLabel(methodDetail.methods) }}
       </n-descriptions-item>
       <n-descriptions-item label="币种">
         {{ methodDetail.currency }}
@@ -159,6 +159,16 @@
 
   // 搜索表单数据
   const searchForm = ref({});
+
+  // 提现方式映射
+  const methodsMap = {
+    'Crypto': '虚拟币'
+  };
+
+  // 获取提现方式标签
+  function getMethodsLabel(methods: string) {
+    return methodsMap[methods] || methods;
+  }
 
   // 查看提现方式详情
   const showMethodModal = ref(false);
@@ -362,7 +372,7 @@
       '用户简称': item.username,
       'FB_ID': item.fb_id,
       '所属管理者': item.admin_username || '-',
-      '提现方式': item.methods,
+      '提现方式': getMethodsLabel(item.methods),
       '币种': item.currency,
       '钱包地址': item.address,
       '涉及金额': item.money.toFixed(2),
