@@ -113,24 +113,25 @@
     </n-button>
 
     <!-- 已生成计划列表 -->
-    <n-card v-if="generatedPlans.length > 0" :title="`批量已添加计划汇总（${generatedPlans.length}）`" :bordered="false">
-      <template #header-extra>
+    <div class="border-[1px] rounded-lg">
+      <div class="flex justify-between p-3 border-b-[1px] border-[#e7e7e7]">
+        <div class="font-semibold text-base">批量已添加计划汇总（{{ generatedPlans.length }}）</div>
         <n-space>
           <n-button text type="error" @click="clearAll">
             清除全部
           </n-button>
         </n-space>
-      </template>
-
-      <n-data-table
-        :columns="columns"
-        :data="generatedPlans"
-        :pagination="false"
-        :bordered="true"
-        :scroll-x="960"
-        class="-mt-6"
-      />
-    </n-card>
+      </div>
+      <div class="p-3">
+        <n-data-table
+          :columns="columns"
+          :data="generatedPlans"
+          :pagination="false"
+          :bordered="false"
+          :scroll-x="960"
+        />
+      </div>
+    </div>
 
     <!-- 派单按钮 -->
     <n-button

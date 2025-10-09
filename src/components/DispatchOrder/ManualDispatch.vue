@@ -110,22 +110,26 @@
     
 
     <!-- 手动已添加计划汇总 -->
-    <n-card v-if="manualPlans.length > 0" :title="`手动已添加计划汇总（${manualPlans.length}）`" :bordered="false">
-      <template #header-extra>
-        <n-button text type="error" @click="clearAll">
-          清除全部
-        </n-button>
-      </template>
-
-      <n-data-table
-        :columns="summaryColumns"
-        :data="manualPlans"
-        :pagination="false"
-        :bordered="true"
-        :scroll-x="960"
-        class="-mt-6"
-      />
-    </n-card>
+    <div class="border-[1px] rounded-lg" v-if="manualPlans.length > 0">
+      <div class="flex justify-between p-3 border-b-[1px] border-[#e7e7e7]">
+        <div class="font-semibold text-base">手动已添加计划汇总（{{ manualPlans.length }}）</div>
+      
+        <n-space>
+          <n-button text type="error" @click="clearAll">
+            清除全部
+          </n-button>
+        </n-space>
+      </div>
+      <div class="p-3">
+        <n-data-table
+          :columns="summaryColumns"
+          :data="manualPlans"
+          :pagination="false"
+          :bordered="false"
+          :scroll-x="960"
+        />
+      </div>
+    </div>
 
     <!-- 派单按钮 -->
     <n-button
