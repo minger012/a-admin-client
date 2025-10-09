@@ -35,3 +35,30 @@ export function planDel(id) {
     meta: { isReturnNativeResponse: true },
   });
 }
+
+/**
+ * @description: 用户计划订单列表
+ */
+export function planOrderList(params) {
+  return Alova.Post('/admin/planOrder/list', params, {
+    meta: { isReturnNativeResponse: true },
+  });
+}
+
+/**
+ * @description: 编辑用户计划订单
+ */
+export function planOrderEdit(params) {
+  return Alova.Post('/admin/planOrder/edit', params, {
+    meta: { isReturnNativeResponse: true },
+  });
+}
+
+/**
+ * @description: 删除用户计划订单
+ */
+export function planOrderDel(id) {
+  return Alova.Post('/admin/planOrder/del', { id }, {
+    meta: { isReturnNativeResponse: true },
+  });
+}
