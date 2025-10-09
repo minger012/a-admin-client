@@ -50,7 +50,9 @@ const stateTypeMap = {
   2: 'warning',
 };
 
-export const columns: BasicColumn<MemberListData>[] = [
+export const createColumns = (handlers?: {
+  onEditBank?: (record: MemberListData) => void;
+}): BasicColumn<MemberListData>[] => [
   {
     title: '用户ID',
     key: 'id',
@@ -119,25 +121,25 @@ export const columns: BasicColumn<MemberListData>[] = [
   {
     title: 'FB_ID',
     key: 'fb_id',
-    width: 150,
+    width: 180,
   },
   {
     title: '提现方式',
     key: 'bank',
     width: 150,
     render(row) {
-      const bankCount = row.bank?.length || 0;
       return h(NSpace, { size: 'small' }, {
         default: () => [
           h(NButton, {
             text: true,
             type: 'primary',
             size: 'small',
-          }, { default: () => `查看(${bankCount})` }),
+          }, { default: () => `查看` }),
           h(NButton, {
             text: true,
             type: 'info',
             size: 'small',
+            onClick: () => handlers?.onEditBank?.(row),
           }, { default: () => '编辑' }),
         ]
       });
@@ -171,9 +173,9 @@ export const columns: BasicColumn<MemberListData>[] = [
   {
     title: '用户视角',
     key: 'user_perspective',
-    width: 180,
+    width: 120,
     render(row ) {
-      return h(NSpace, { size: 'small' }, {
+      return h(NSpace, { size: 'small', vertical: true }, {
         default: () => [
           h(NButton, {
             text: true,

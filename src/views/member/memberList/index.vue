@@ -8,7 +8,7 @@
       :row-key="(row:MemberListData) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
-      :scroll-x="2000"
+      :scroll-x="2200"
       :striped="true"
     >
     </BasicTable>
@@ -71,9 +71,10 @@
   import { h, reactive, ref } from 'vue';
   import { BasicTable } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
-  import { columns, MemberListData } from './columns';
+  import { createColumns, MemberListData } from './columns';
   import { getUserList } from '@/api/system/user';
-  import { useMessage, NButton, NSpace } from 'naive-ui';
+  import { useMessage, NButton, NSpace, NDropdown, NIcon } from 'naive-ui';
+  import { MoreOutlined } from '@vicons/antd';
   import EditUserModal from './components/EditUserModal.vue';
   import EditPwdModal from './components/EditPwdModal.vue';
   import EditPayPwdModal from './components/EditPayPwdModal.vue';
@@ -88,6 +89,11 @@
   const currentUser = ref<any>(null);
   const dispatchOrderRef = ref();
   const currentUserId = ref(0);
+
+  // 创建带回调的columns
+  const columns = createColumns({
+    onEditBank: (record) => handleEditBank(record),
+  });
 
   // 各种弹窗状态
   const showEditModal = ref(false);
@@ -193,54 +199,68 @@
     key: 'action',
     fixed: 'right',
     render(record) {
+      // 更多操作下拉菜单选项
+      const moreOptions = [
+        {
+          label: '修改密码',
+          key: 'editPwd',
+          props: {
+            onClick: () => handleEditPwd(record)
+          }
+        },
+        {
+          label: '修改支付密码',
+          key: 'editPayPwd',
+          props: {
+            onClick: () => handleEditPayPwd(record)
+          }
+        }
+      ];
+
       return h(NSpace, { vertical: true, size: 'small' }, {
         default: () => [
           h(NButton, {
             text: true,
             type: 'primary',
             size: 'small',
-            onClick: () => handleEdit(record),
-          }, { default: () => '编辑' }),
-          h(NButton, {
-            text: true,
-            type: 'info',
-            size: 'small',
-            onClick: () => handleEditPwd(record),
-          }, { default: () => '修改密码' }),
-          h(NButton, {
-            text: true,
-            size: 'small',
-            onClick: () => handleEditPayPwd(record),
-          }, { default: () => '修改支付密码' }),
-          h(NButton, {
-            text: true,
-            size: 'small',
-            onClick: () => handleEditBank(record),
-          }, { default: () => '修改提现方式' }),
-          h(NButton, {
-            text: true,
-            type: 'success',
-            size: 'small',
             onClick: () => handleRecharge(record),
           }, { default: () => '充值' }),
           h(NButton, {
             text: true,
-            type: 'error',
+            type: 'primary',
             size: 'small',
             onClick: () => handleDeduct(record),
           }, { default: () => '扣款' }),
           h(NButton, {
             text: true,
-            type: 'warning',
+            type: 'primary',
             size: 'small',
             onClick: () => handleSendCoupon(record),
-          }, { default: () => '发优惠券' }),
+          }, { default: () => '派优惠券' }),
           h(NButton, {
             text: true,
             type: 'info',
             size: 'small',
             onClick: () => handleDispatch(record),
           }, { default: () => '派单' }),
+          h(NButton, {
+            text: true,
+            type: 'primary',
+            size: 'small',
+            onClick: () => handleEdit(record),
+          }, { default: () => '编辑' }),
+          h(NDropdown, {
+            options: moreOptions,
+            trigger: 'click'
+          }, {
+            default: () => h(NButton, {
+              text: true,
+              type: 'primary',
+              size: 'small'
+            }, {
+              default: () => '更多'
+            })
+          }),
         ]
       });
     },
