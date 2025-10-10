@@ -3,7 +3,7 @@
     v-model:show="showModal"
     preset="card"
     title="编辑用户计划"
-    :style="{ width: '600px' }"
+    :style="{ width: '500px' }"
     :mask-closable="false"
   >
     <n-form
@@ -222,7 +222,7 @@ watch(() => props.data, (data) => {
       show_num: data.show_num,
       click_num: data.click_num,
       click_price: data.click_price,
-      cd: Math.floor(data.cd / 60), // 转换为分钟
+      cd: data.cd, 
       min: data.min,
       max: data.max,
       rate: data.rate,
@@ -280,7 +280,7 @@ async function handleSubmit() {
       show_num: formData.value.show_num,
       click_num: formData.value.click_num,
       click_price: formData.value.click_price,
-      cd: formData.value.cd * 60, // 转换为秒
+      cd: formData.value.cd,
       min: formData.value.min,
       max: formData.value.max,
       rate: formData.value.rate,

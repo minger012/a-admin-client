@@ -93,7 +93,7 @@
         </div>
         <div class="field-item">
           <span class="label">消耗时间:</span>
-          <span class="value">{{ data.cd }}秒</span>
+          <span class="value">{{ data.cd ? data.cd * 60 : '-' }}秒</span>
         </div>
       </div>
     </div>
