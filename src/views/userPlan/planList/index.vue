@@ -1,23 +1,25 @@
 <template>
   <n-card :bordered="false" class="proCard">
     <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset" />
-
-    <BasicTable
-      :columns="columns"
-      :request="loadDataTable"
-      :row-key="(row:PlanOrderItem) => row.id"
-      ref="actionRef"
-      :actionColumn="actionColumn"
-      :scroll-x="2600"
-      :striped="false"
-      :row-class-name="rowClassName"
-    >
-    </BasicTable>
+    <div  id="planListTable">
+      <BasicTable
+        :columns="columns"
+        :request="loadDataTable"
+        :row-key="(row:PlanOrderItem) => row.id"
+        ref="actionRef"
+        :actionColumn="actionColumn"
+        :scroll-x="2600"
+        :striped="false"
+        :row-class-name="rowClassName"
+        :render-expand-icon="renderExpandIcon"
+      >
+      </BasicTable>
+    </div>
   </n-card>
 </template>
 
 <script lang="ts" setup>
-  import { h, reactive, ref } from 'vue';
+  import { h, onMounted,onBeforeUnmount, reactive, ref } from 'vue';
   import { BasicTable } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { columns, PlanOrderItem } from './columns';
@@ -206,6 +208,13 @@
     return row.is_group_first ? 'tr-group-first' : 'tr-group-normal';
   }
 
+  // 自定义展开图标
+  function renderExpandIcon({ expanded }: { expanded: boolean }) {
+    return h('span', { 
+      class: 'expand-icon',
+    }, expanded ? '−' : '+');
+  }
+
 
 
   function reloadTable() {
@@ -251,6 +260,20 @@
   function handleReset() {
     searchForm.value = {};
   }
+
+  const initTableWidth = ()=>{
+    const el:HTMLElement | null = document.getElementById('planListTable')
+    if(el){
+      el.style.setProperty('--plan-list-width', el.offsetWidth + 'px');
+    }
+  }
+  onMounted(()=>{
+    initTableWidth()
+    window.addEventListener('resize', initTableWidth)
+  })
+  onBeforeUnmount(()=>{
+    window.removeEventListener('resize', initTableWidth)
+  })
 </script>
 
 <style lang="less" scoped>
@@ -277,6 +300,31 @@
     }
     td.td-bg{
       background-color: #f9f9f9;
+    }
+  }
+  &.n-data-table-tr--expanded{
+    td{
+      background-color: #f9f9f9;
+    }
+  }
+
+  .expand-icon {
+    font-size: 16px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    border:1px solid #e7e7e7;
+    transition: .3s;
+    border-radius: 4px;
+    font-weight: 400;
+    &:hover{
+      border-color:#2d8cf0;
+      color:#2d8cf0;
     }
   }
 }
