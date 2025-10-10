@@ -8,9 +8,9 @@
       :row-key="(row:PlanOrderItem) => row.id"
       ref="actionRef"
       :actionColumn="actionColumn"
-      :scroll-x="2400"
+      :scroll-x="2600"
       :striped="false"
-      :row-props="rowProps"
+      :row-class-name="rowClassName"
     >
     </BasicTable>
   </n-card>
@@ -107,7 +107,7 @@
 
   // 表格操作列配置
   const actionColumn = reactive({
-    width: 150,
+    width: 120,
     title: '操作',
     key: 'action',
     fixed: 'right',
@@ -202,12 +202,8 @@
   }
 
   // 行样式设置（使用rowProps而不rowClassName）
-  function rowProps(row: PlanOrderItem) {
-    return {
-      style: {
-        backgroundColor: row.is_group_first ? '#e6f4ff' : '#f5f5f5'
-      }
-    };
+  function rowClassName(row: PlanOrderItem) {
+    return row.is_group_first ? 'tr-group-first' : 'tr-group-normal';
   }
 
 
@@ -265,5 +261,24 @@
 
 :deep(.n-data-table-tr) {
   transition: background-color 0.3s ease;
+  &.tr-group-first {
+    td{
+      border-top:2px solid #2d8cf0;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    td.td-bg{
+      background-color: #e6f4ff !important;
+    }
+  }
+  &.tr-group-normal {
+    td{
+      font-size: 14px;
+    }
+    td.td-bg{
+      background-color: #f9f9f9;
+    }
+  }
 }
+
 </style>

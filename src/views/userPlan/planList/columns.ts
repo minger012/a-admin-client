@@ -209,18 +209,37 @@ export const columns: any[] = [
   {
     title: '联单组',
     key: 'fb_id',
-    width: 200,
+    width: 280,
+    className:'td-bg',
     render(row) {
       return h('div', [
-        h('div', { class: 'text-xs text-gray-500' }, `ID: ${row.fb_id}`),
+        h('div', { class: 'flex items-center gap-2' }, [
+          h('span', `ID: ${row.fb_id}`),
+          h(NTag, {
+            type: 'primary',
+            size: 'small',
+            bordered: true,
+          }, {
+            default: () => `共${row.group_count}条`
+          })
+        ]),
         h('div', { class: 'mt-1' }, [
           h(NTag, {
             type: 'success',
             size: 'small',
-            bordered: false,
+            bordered: true,
           }, {
-            default: () => `${row.item_index}/${row.group_count} ${stateMap[row.state] || '未知'}`
-          })
+            default: () => `${row.item_index}/${row.group_count}`
+          }),
+          row.state == 4 || row.state == 5 ?
+          h(NTag, {
+            type: 'primary',
+            size: 'small',
+            bordered: true,
+            style: { marginLeft: '8px' },
+          }, {
+            default: () => `已完成`
+          }) : null
         ])
       ]);
     },
@@ -229,31 +248,37 @@ export const columns: any[] = [
     title: '用户ID',
     key: 'uid',
     width: 100,
+    className:'td-bg',
   },
   {
     title: '用户简称',
     key: 'short_name',
     width: 120,
+    className:'td-bg',
   },
   {
     title: '订单编号',
     key: 'order_no',
-    width: 200,
+    width: 240,
+    className:'td-bg',
   },
   {
     title: '计划名称',
     key: 'plan_name',
-    width: 150,
+    width: 180,
+    className:'td-bg',
   },
   {
     title: '产品名称',
     key: 'goods_name',
-    width: 150,
+    width: 180,
+    className:'td-bg',
   },
   {
     title: '前台投放',
     key: 'form',
     width: 100,
+    className:'td-bg',
     render(row) {
       return row.form === 1 ? '是' : '否';
     },
@@ -261,7 +286,8 @@ export const columns: any[] = [
   {
     title: '投放金额',
     key: 'money',
-    width: 120,
+    width: 100,
+    className:'td-bg',
     render(row) {
       return row.money;
     },
@@ -269,7 +295,8 @@ export const columns: any[] = [
   {
     title: '投放进度',
     key: 'schedule',
-    width: 120,
+    width: 100,
+    className:'td-bg',
     render(row) {
       return `${row.schedule}%`;
     },
@@ -277,7 +304,8 @@ export const columns: any[] = [
   {
     title: '已投放',
     key: 'putIn',
-    width: 120,
+    width: 100,
+    className:'td-bg',
     render(row) {
       return row.putIn;
     },
@@ -285,7 +313,8 @@ export const columns: any[] = [
   {
     title: '待投放',
     key: 'wait_putIn',
-    width: 120,
+    width: 100,
+    className:'td-bg',
     render(row) {
       return row.wait_putIn;
     },
@@ -293,7 +322,8 @@ export const columns: any[] = [
   {
     title: '利润',
     key: 'profit',
-    width: 120,
+    width: 100,
+    className:'td-bg',
     render(row) {
       return row.profit;
     },
@@ -302,6 +332,7 @@ export const columns: any[] = [
     title: '投放利润率',
     key: 'rate',
     width: 120,
+    className:'td-bg',
     render(row) {
       // 根据利润率值设置颜色
       let type: any = 'default';
@@ -317,7 +348,8 @@ export const columns: any[] = [
       
       return h(NTag, {
         type,
-        bordered: false,
+        bordered: true,
+        size:'small',
       }, {
         default: () => `${row.rate}%`
       });
@@ -328,10 +360,12 @@ export const columns: any[] = [
     key: 'state',
     width: 110,
     fixed:'right',
+    className:'td-bg',
     render(row) {
       return h(NTag, {
         type: stateTypeMap[row.state] || 'default',
-        bordered: false,
+        size:'small',
+        bordered: true,
       }, {
         default: () => stateMap[row.state] || '未知'
       });
@@ -341,6 +375,7 @@ export const columns: any[] = [
     title: '更新时间',
     key: 'update_time',
     width: 160,
+    className:'td-bg',
     render(row) {
       return new Date(row.update_time * 1000).toLocaleString('zh-CN');
     },
