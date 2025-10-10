@@ -74,7 +74,7 @@
           <n-space>
             <n-form-item label="投放利润" required>
               <n-input-number
-                v-model:value="plan.profitRate"
+                v-model:value="plan.rate"
                 :min="0"
                 :show-button="false"
                 placeholder="利润率"
@@ -167,7 +167,7 @@ interface ManualPlan {
   max: number | null;
   cd: number | null;
   officialPush: boolean;
-  profitRate: number | null;
+  rate: number | null;
 }
 
 // 手动添加的计划列表
@@ -204,13 +204,13 @@ const summaryColumns = [
   },
   {
     title: '利润率',
-    key: 'profitRate',
+    key: 'rate',
     width: 120,
     render: (row: ManualPlan) => {
       return h(NInputNumber, {
-        value: row.profitRate,
+        value: row.rate,
         onUpdateValue: (v) => {
-          row.profitRate = v ?? 0;
+          row.rate = v ?? 0;
         },
         min: 0,
         showButton: false,
@@ -301,7 +301,7 @@ function addPlan() {
     max: null,
     cd: null,
     officialPush: false,
-    profitRate: null,
+    rate: null,
   });
 }
 
@@ -341,7 +341,7 @@ async function handleDispatch() {
       message.error(`计划 #${i + 1}: 请输入投放时间`);
       return;
     }
-    if (plan.profitRate === null || plan.profitRate === undefined) {
+    if (plan.rate === null || plan.rate === undefined) {
       message.error(`计划 #${i + 1}: 请输入投放利润`);
       return;
     }
@@ -357,7 +357,8 @@ async function handleDispatch() {
         min: item.min!,
         max: item.max!,
         cd: item.cd!,
-        form: item.officialPush ? 1 : 2,
+        form: item.officialPush ? 2 : 1,
+        rate: item.rate
       })),
     };
 

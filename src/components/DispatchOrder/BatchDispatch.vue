@@ -81,7 +81,7 @@
     <n-space>
       <n-form-item label="投放利润">
         <n-input-number
-          v-model:value="formData.profitRate"
+          v-model:value="formData.rate"
           :min="0"
           placeholder="请输入利润率"
           style="width: 200px"
@@ -150,7 +150,7 @@
 
 <script lang="ts" setup>
 import { h, reactive, ref } from 'vue';
-import { NButton, NInputNumber, NIcon, useMessage } from 'naive-ui';
+import { NButton, NInputNumber, NSwitch, NIcon, useMessage } from 'naive-ui';
 import { PlusOutlined, DeleteOutlined } from '@vicons/antd';
 import { planList } from '@/api/plan';
 import { addPlanOrder } from '@/api/system/user';
@@ -170,7 +170,7 @@ const formData = reactive({
   maxAmount: null as number | null,
   batchCount: 1,
   officialPush: false,
-  profitRate: null as number | null,
+  rate: null as number | null,
   releaseTime: null as number | null,
   selectedPlans: [] as number[], // 选中的计划ID列表
 });
@@ -209,13 +209,13 @@ const columns = [
   },
   {
     title: '利润率',
-    key: 'profitRate',
+    key: 'rate',
     width: 120,
     render: (row: any) => {
       return h(NInputNumber, {
-        value: row.profitRate,
+        value: row.rate,
         onUpdateValue: (v) => {
-          row.profitRate = v ?? 0;
+          row.rate = v ?? 0;
         },
         min: 0,
         suffix: () => '%',
@@ -241,9 +241,16 @@ const columns = [
   },
   {
     title: '官方推送',
-    key: 'form',
+    key: 'officialPush',
     width: 100,
-    render: (row: any) => (row.form === 1 ? '前台' : '后台'),
+    render: (row: any) => {
+      return h(NSwitch, {
+        value: row.officialPush,
+        onUpdateValue: (v) => {
+          row.officialPush = v;
+        },
+      });
+    },
   },
   {
     title: '操作',
@@ -389,8 +396,8 @@ async function generatePlans() {
         min: min,
         max: max,
         cd: formData.releaseTime || 0,
-        form: formData.officialPush ? 1 : 2,
-        profitRate: formData.profitRate || 0,
+        officialPush: formData.officialPush,
+        rate: formData.rate || 0,
       });
     }
 
@@ -432,7 +439,8 @@ async function handleDispatch() {
         min: item.min,
         max: item.max,
         cd: item.cd,
-        form: item.form,
+        form: item.officialPush ? 2 : 1,
+        rate: item.rate,
       })),
     };
 
@@ -446,7 +454,7 @@ async function handleDispatch() {
       formData.minAmount = null;
       formData.maxAmount = null;
       formData.batchCount = 1;
-      formData.profitRate = null;
+      formData.rate = null;
       formData.releaseTime = null;
     } else {
       message.error(res.msg || '派单失败');

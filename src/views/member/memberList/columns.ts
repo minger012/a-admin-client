@@ -79,7 +79,16 @@ export const createColumns = (handlers?: {
     title: '头像',
     key: 'image',
     width: 120,
-    
+    render(row:any) {
+      return row.image ? h('img', {
+        src: row.image,
+        style: {
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+        },
+      }) : '';
+    },
   },
   {
     title: '手机号',
