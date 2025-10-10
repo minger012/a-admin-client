@@ -15,6 +15,13 @@
       >
       </BasicTable>
     </div>
+
+    <!-- 编辑弹窗 -->
+    <EditModal
+      v-model:show="showEditModal"
+      :data="currentRecord"
+      @success="reloadTable"
+    />
   </n-card>
 </template>
 
@@ -25,10 +32,13 @@
   import { columns, PlanOrderItem } from './columns';
   import { planOrderList, planOrderDel } from '@/api/plan';
   import { useMessage, NButton, NSpace, useDialog } from 'naive-ui';
+  import EditModal from './EditModal.vue';
 
   const message = useMessage();
   const dialog = useDialog();
   const actionRef = ref();
+  const showEditModal = ref(false);
+  const currentRecord = ref<PlanOrderItem | null>(null);
 
   interface SearchFormType {
     uid?: string | number;
@@ -223,8 +233,8 @@
 
   // 编辑
   function handleEdit(record: PlanOrderItem) {
-    message.info(`编辑功能开发中... ID: ${record.id}`);
-    // TODO: 打开编辑弹窗
+    currentRecord.value = record;
+    showEditModal.value = true;
   }
 
   // 删除
