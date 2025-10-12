@@ -41,8 +41,9 @@
           :columns="columns"
           :data="tableData"
           :pagination="pagination"
+          :loading="loading"
           :bordered="false"
-          :row-key="(row) => row.id"
+          :row-key="(row) => row.date"
           v-model:checked-row-keys="checkedRowKeys"
         />
       </n-space>
@@ -51,149 +52,23 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue';
+  import { ref, onMounted, reactive } from 'vue';
   import { SearchOutlined, ExportOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { exportToExcel } from '@/utils/excel';
+  import { getWithdrawStats } from '@/api/data/statistics';
   import type { DataTableColumns } from 'naive-ui';
 
   const message = useMessage();
   const filters = ref({
     createDate: null as [number, number] | null,
   });
-  const checkedRowKeys = ref<number[]>([]); // 选中的行
+  const checkedRowKeys = ref<string[]>([]); // 选中的行
+  const loading = ref(false);
 
-  // 模拟数据
-  const tableData = ref([
-    {
-      id: 22,
-      date: '2025-09-30',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-30 08:00:13',
-      create_time: '2025-09-30 08:00:13',
-    },
-    {
-      id: 21,
-      date: '2025-09-29',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-29 08:00:13',
-      create_time: '2025-09-29 08:00:13',
-    },
-    {
-      id: 20,
-      date: '2025-09-28',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-28 08:00:13',
-      create_time: '2025-09-28 08:00:13',
-    },
-    {
-      id: 19,
-      date: '2025-09-27',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-27 08:00:13',
-      create_time: '2025-09-27 08:00:13',
-    },
-    {
-      id: 18,
-      date: '2025-09-26',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-26 08:00:13',
-      create_time: '2025-09-26 08:00:13',
-    },
-    {
-      id: 17,
-      date: '2025-09-25',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-25 08:00:13',
-      create_time: '2025-09-25 08:00:13',
-    },
-    {
-      id: 16,
-      date: '2025-09-24',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-24 08:00:07',
-      create_time: '2025-09-24 08:00:07',
-    },
-    {
-      id: 15,
-      date: '2025-09-23',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-23 08:00:07',
-      create_time: '2025-09-23 08:00:07',
-    },
-    {
-      id: 14,
-      date: '2025-09-22',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-22 23:05:07',
-      create_time: '2025-09-22 23:05:07',
-    },
-    {
-      id: 13,
-      date: '2025-09-21',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-21 08:00:08',
-      create_time: '2025-09-21 08:00:08',
-    },
-    {
-      id: 12,
-      date: '2025-09-20',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-20 08:00:08',
-      create_time: '2025-09-20 08:00:08',
-    },
-    {
-      id: 11,
-      date: '2025-09-19',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-19 08:00:08',
-      create_time: '2025-09-19 08:00:08',
-    },
-    {
-      id: 10,
-      date: '2025-09-18',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-18 08:00:08',
-      create_time: '2025-09-18 08:00:08',
-    },
-    {
-      id: 9,
-      date: '2025-09-17',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-17 08:00:08',
-      create_time: '2025-09-17 08:00:08',
-    },
-    {
-      id: 8,
-      date: '2025-09-16',
-      recharge_amount: 100,
-      withdraw_amount: 0,
-      update_time: '2025-09-17 03:50:53',
-      create_time: '2025-09-16 08:00:08',
-    },
-    {
-      id: 7,
-      date: '2025-09-15',
-      recharge_amount: 0,
-      withdraw_amount: 0,
-      update_time: '2025-09-15 08:00:12',
-      create_time: '2025-09-15 08:00:12',
-    },
-  ]);
+  // 表格数据
+  const tableData = ref<any[]>([]);
+
 
   // 表格列定义
   const columns: DataTableColumns = [
@@ -201,29 +76,19 @@
       type: 'selection',
     },
     {
-      title: 'ID',
-      key: 'id',
-      width: 80,
-    },
-    {
       title: '日期',
       key: 'date',
       width: 150,
     },
     {
-      title: '充值金额',
-      key: 'recharge_amount',
+      title: '提现次数',
+      key: 'withdraw_count',
       width: 150,
     },
     {
-      title: '提现金额',
-      key: 'withdraw_amount',
+      title: '总金额',
+      key: 'total_amount',
       width: 150,
-    },
-    {
-      title: '更新时间',
-      key: 'update_time',
-      width: 200,
     },
     {
       title: '创建时间',
@@ -233,19 +98,61 @@
   ];
 
   // 分页配置
-  const pagination = {
+  const pagination = reactive({
     page: 1,
-    pageSize: 10,
-    pageCount: 2,
-    itemCount: tableData.value.length,
+    pageSize: 20,
+    pageCount: 1,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: (page: number) => {
+      pagination.page = page;
+      loadData();
+    },
+    onUpdatePageSize: (pageSize: number) => {
+      pagination.pageSize = pageSize;
+      pagination.page = 1;
+      loadData();
+    },
+  });
+
+  // 加载数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      
+      const params: any = {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+
+      // 处理日期范围
+      if (filters.value.createDate && filters.value.createDate.length === 2) {
+        params.sTime = Math.floor(filters.value.createDate[0] / 1000); // 转换为秒级时间戳
+        params.eTime = Math.floor(filters.value.createDate[1] / 1000);
+      }
+
+      const response = await getWithdrawStats(params);
+      
+      if (response.code === 1 && response.data) {
+        tableData.value = response.data.list || [];
+        pagination.itemCount = response.data.total || 0;
+        pagination.pageCount = response.data.total_page || 1;
+      } else {
+        message.error(response.msg || '获取数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败，请重试');
+    } finally {
+      loading.value = false;
+    }
+  }
 
   // 查询
   function handleSearch() {
-    console.log('查询条件:', filters.value);
-    message.info('查询功能待API实现');
+    pagination.page = 1; // 重置到第一页
+    loadData();
   }
 
   // 重置
@@ -253,7 +160,8 @@
     filters.value = {
       createDate: null,
     };
-    console.log('重置筛选');
+    pagination.page = 1;
+    loadData();
   }
 
   // 导出
@@ -265,7 +173,7 @@
       if (checkedRowKeys.value.length > 0) {
         // 导出选中的数据
         dataToExport = tableData.value.filter(item => 
-          checkedRowKeys.value.includes(item.id)
+          checkedRowKeys.value.includes(item.date)
         );
         console.log(`导出选中的 ${dataToExport.length} 条数据`);
       } else {
@@ -279,16 +187,14 @@
 
       // 定义导出列
       const exportColumns = [
-        { title: 'ID', key: 'id' },
         { title: '日期', key: 'date' },
-        { title: '充值金额', key: 'recharge_amount' },
-        { title: '提现金额', key: 'withdraw_amount' },
-        { title: '更新时间', key: 'update_time' },
+        { title: '提现次数', key: 'withdraw_count' },
+        { title: '总金额', key: 'total_amount' },
         { title: '创建时间', key: 'create_time' },
       ];
 
       // 调用通用导出方法
-      exportToExcel(dataToExport, exportColumns, '充值提现统计');
+      exportToExcel(dataToExport, exportColumns, '提现统计');
       
       message.success(`已导出 ${dataToExport.length} 条数据`);
       
@@ -299,6 +205,11 @@
       message.error('导出失败，请重试');
     }
   }
+
+  // 组件挂载时加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped></style>

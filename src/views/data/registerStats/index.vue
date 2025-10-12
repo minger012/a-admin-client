@@ -41,6 +41,7 @@
           :columns="columns"
           :data="tableData"
           :pagination="pagination"
+          :loading="loading"
           :bordered="false"
           :row-key="(row) => row.date"
           v-model:checked-row-keys="checkedRowKeys"
@@ -51,115 +52,21 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue';
+  import { ref, onMounted, reactive } from 'vue';
   import { SearchOutlined, ExportOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { exportToExcel } from '@/utils/excel';
+  import { getRegisterStats } from '@/api/data/statistics';
   import type { DataTableColumns } from 'naive-ui';
 
   const message = useMessage();
   const dateRange = ref<[number, number] | null>(null);
   const checkedRowKeys = ref<string[]>([]); // 选中的行
+  const loading = ref(false);
 
-  // 模拟数据
-  const tableData = ref([
-    {
-      date: '2025-09-30',
-      register_count: 0,
-      first_time: '2025-09-30 08:00:13',
-      create_time: '2025-09-30 08:00:13',
-    },
-    {
-      date: '2025-09-29',
-      register_count: 0,
-      first_time: '2025-09-29 08:00:13',
-      create_time: '2025-09-29 08:00:13',
-    },
-    {
-      date: '2025-09-28',
-      register_count: 0,
-      first_time: '2025-09-28 08:00:13',
-      create_time: '2025-09-28 08:00:13',
-    },
-    {
-      date: '2025-09-27',
-      register_count: 0,
-      first_time: '2025-09-27 08:00:13',
-      create_time: '2025-09-27 08:00:13',
-    },
-    {
-      date: '2025-09-26',
-      register_count: 0,
-      first_time: '2025-09-26 08:00:13',
-      create_time: '2025-09-26 08:00:13',
-    },
-    {
-      date: '2025-09-25',
-      register_count: 0,
-      first_time: '2025-09-25 08:00:13',
-      create_time: '2025-09-25 08:00:13',
-    },
-    {
-      date: '2025-09-24',
-      register_count: 1,
-      first_time: '2025-09-24 15:50:43',
-      create_time: '2025-09-24 08:00:07',
-    },
-    {
-      date: '2025-09-23',
-      register_count: 0,
-      first_time: '2025-09-23 08:00:07',
-      create_time: '2025-09-23 08:00:07',
-    },
-    {
-      date: '2025-09-22',
-      register_count: 0,
-      first_time: '2025-09-22 23:05:07',
-      create_time: '2025-09-22 23:05:07',
-    },
-    {
-      date: '2025-09-21',
-      register_count: 0,
-      first_time: '2025-09-21 08:00:08',
-      create_time: '2025-09-21 08:00:08',
-    },
-    {
-      date: '2025-09-20',
-      register_count: 0,
-      first_time: '2025-09-20 08:00:08',
-      create_time: '2025-09-20 08:00:08',
-    },
-    {
-      date: '2025-09-19',
-      register_count: 0,
-      first_time: '2025-09-19 08:00:08',
-      create_time: '2025-09-19 08:00:08',
-    },
-    {
-      date: '2025-09-18',
-      register_count: 1,
-      first_time: '2025-09-18 11:00:08',
-      create_time: '2025-09-18 08:00:08',
-    },
-    {
-      date: '2025-09-17',
-      register_count: 0,
-      first_time: '2025-09-17 08:00:08',
-      create_time: '2025-09-17 08:00:08',
-    },
-    {
-      date: '2025-09-16',
-      register_count: 1,
-      first_time: '2025-09-17 03:47:38',
-      create_time: '2025-09-16 08:00:08',
-    },
-    {
-      date: '2025-09-15',
-      register_count: 1,
-      first_time: '2025-09-15 21:18:38',
-      create_time: '2025-09-15 08:00:02',
-    },
-  ]);
+  // 表格数据
+  const tableData = ref<any[]>([]);
+
 
   // 表格列定义
   const columns: DataTableColumns = [
@@ -176,11 +83,7 @@
       key: 'register_count',
       width: 150,
     },
-    {
-      title: '首次时间',
-      key: 'first_time',
-      width: 200,
-    },
+
     {
       title: '创建时间',
       key: 'create_time',
@@ -189,25 +92,68 @@
   ];
 
   // 分页配置
-  const pagination = {
+  const pagination = reactive({
     page: 1,
-    pageSize: 10,
-    pageCount: 2,
-    itemCount: tableData.value.length,
+    pageSize: 20,
+    pageCount: 1,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: (page: number) => {
+      pagination.page = page;
+      loadData();
+    },
+    onUpdatePageSize: (pageSize: number) => {
+      pagination.pageSize = pageSize;
+      pagination.page = 1;
+      loadData();
+    },
+  });
+
+  // 加载数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      
+      const params: any = {
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+      };
+
+      // 处理日期范围
+      if (dateRange.value && dateRange.value.length === 2) {
+        params.sTime = Math.floor(dateRange.value[0] / 1000); // 转换为秒级时间戳
+        params.eTime = Math.floor(dateRange.value[1] / 1000);
+      }
+
+      const response = await getRegisterStats(params);
+      
+      if (response.code === 1 && response.data) {
+        tableData.value = response.data.list || [];
+        pagination.itemCount = response.data.total || 0;
+        pagination.pageCount = response.data.total_page || 1;
+      } else {
+        message.error(response.msg || '获取数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败，请重试');
+    } finally {
+      loading.value = false;
+    }
+  }
 
   // 查询
   function handleSearch() {
-    console.log('查询，日期范围:', dateRange.value);
-    message.info('查询功能待API实现');
+    pagination.page = 1; // 重置到第一页
+    loadData();
   }
 
   // 重置
   function handleReset() {
     dateRange.value = null;
-    console.log('重置筛选');
+    pagination.page = 1;
+    loadData();
   }
 
   // 导出
@@ -235,7 +181,6 @@
       const exportColumns = [
         { title: '日期', key: 'date' },
         { title: '注册人数', key: 'register_count' },
-        { title: '首次时间', key: 'first_time' },
         { title: '创建时间', key: 'create_time' },
       ];
 
@@ -251,6 +196,11 @@
       message.error('导出失败，请重试');
     }
   }
+
+  // 组件挂载时加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped></style>
