@@ -6,15 +6,15 @@
       <n-space size="large">
         <div class="summary-item">
           <div class="summary-label">总提现笔数</div>
-          <div class="summary-value">{{ mockData.total_withdraw_count }}</div>
+          <div class="summary-value">{{ statsData.total_withdraw_count }}</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">总提现金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.total_withdraw_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.total_withdraw_amount) }}</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">日均提现金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.day_average_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.day_average_amount) }}</div>
         </div>
       </n-space>
 
@@ -33,9 +33,10 @@
       <n-card :bordered="false" title="提现状态统计" class="mb-4">
         <n-data-table
           :columns="statusStatsColumns"
-          :data="mockData.status_stats"
+          :data="statsData.status_stats"
           :pagination="false"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
 
@@ -43,9 +44,10 @@
       <n-card :bordered="false" title="按日统计">
         <n-data-table
           :columns="dayStatsColumns"
-          :data="mockData.day_stats"
+          :data="statsData.day_stats"
           :pagination="dayStatsPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -55,9 +57,10 @@
       <n-card :bordered="false" title="明细统计">
         <n-data-table
           :columns="detailColumns"
-          :data="mockData.day_details"
+          :data="statsData.day_details"
           :pagination="detailPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -65,12 +68,22 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, h } from 'vue';
-  import { NButton, NTag } from 'naive-ui';
+  import { ref, h, onMounted } from 'vue';
+  import { NButton, NTag, useMessage } from 'naive-ui';
   import FilterBar from '../shared/FilterBar.vue';
   import ViewSwitch from '../shared/ViewSwitch.vue';
+  import { getWithdrawStats, getWithdrawDetails } from '@/api/dashboard/statistics';
 
+  const message = useMessage();
   const viewType = ref<'summary' | 'detail'>('summary');
+  const loading = ref(false);
+
+  // 筛选参数
+  const filterParams = ref<any>({
+    start_date: undefined,
+    end_date: undefined,
+    admin_username: undefined,
+  });
 
   // 提现状态枚举
   const withdrawStateMap = {
@@ -79,83 +92,14 @@
     2: { label: '审核拒绝', type: 'error' },
   };
 
-  // 模拟数据
-  const mockData = ref({
-    total_withdraw_count: 4,
-    total_withdraw_amount: 41932.80,
-    day_average_amount: 13977.60,
-    
-    // 提现状态统计
-    status_stats: [
-      {
-        status_name: '待审核',
-        status: 0,
-        withdraw_count: 1,
-        withdraw_amount: 12230.40,
-        percentage: 29.17,
-      },
-      {
-        status_name: '驳回',
-        status: 2,
-        withdraw_count: 3,
-        withdraw_amount: 29702.40,
-        percentage: 70.83,
-      },
-    ],
-    
-    // 按日统计
-    day_stats: [
-      {
-        date: '2025-09-12',
-        withdraw_count: 1,
-        withdraw_amount: 8736.00,
-        percentage: 20.83,
-      },
-      {
-        date: '2025-09-13',
-        withdraw_count: 1,
-        withdraw_amount: 8736.00,
-        percentage: 20.83,
-      },
-      {
-        date: '2025-09-14',
-        withdraw_count: 2,
-        withdraw_amount: 24460.80,
-        percentage: 58.33,
-      },
-    ],
-    
-    // 明细统计
-    day_details: [
-      {
-        id: 2,
-        date: '2025-09-12',
-        status: 2,
-        withdraw_count: 1,
-        withdraw_amount: 8736.00,
-      },
-      {
-        id: 1,
-        date: '2025-09-13',
-        status: 2,
-        withdraw_count: 1,
-        withdraw_amount: 8736.00,
-      },
-      {
-        id: 3,
-        date: '2025-09-14',
-        status: 0,
-        withdraw_count: 1,
-        withdraw_amount: 12230.40,
-      },
-      {
-        id: 4,
-        date: '2025-09-14',
-        status: 2,
-        withdraw_count: 1,
-        withdraw_amount: 12230.40,
-      },
-    ],
+  // 数据状态
+  const statsData = ref({
+    total_withdraw_count: 0,
+    total_withdraw_amount: 0,
+    day_average_amount: 0,
+    status_stats: [],
+    day_stats: [],
+    day_details: [],
   });
 
   // 提现状态统计列
@@ -276,23 +220,26 @@
   ];
 
   // 按日统计分页
-  const dayStatsPagination = {
+  const dayStatsPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_stats.length,
+    itemCount: 0,
     showSizePicker: false,
-  };
+    onChange: undefined,
+  });
 
   // 明细分页
-  const detailPagination = {
+  const detailPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_details.length,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: undefined,
+    onUpdatePageSize: undefined,
+  });
 
   // 格式化金额
   function formatMoney(value: number): string {
@@ -302,10 +249,109 @@
     }).format(value);
   }
 
+  // 加载汇总数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(dayStatsPagination.value.pageSize),
+        page: String(dayStatsPagination.value.page),
+        view_type: 'summary' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getWithdrawStats(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.total_withdraw_count = res.data.total_withdraw_count || 0;
+        statsData.value.total_withdraw_amount = res.data.total_withdraw_amount || 0;
+        statsData.value.day_average_amount = res.data.day_average_amount || 0;
+        statsData.value.status_stats = res.data.status_stats || [];
+        statsData.value.day_stats = res.data.day_stats || [];
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          dayStatsPagination.value.page = res.data.pagination.page;
+          dayStatsPagination.value.pageCount = res.data.pagination.pageCount;
+          dayStatsPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          dayStatsPagination.value.onChange = (page: number) => {
+            dayStatsPagination.value.page = page;
+            loadData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 加载明细数据
+  async function loadDetailData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(detailPagination.value.pageSize),
+        page: String(detailPagination.value.page),
+        view_type: 'detail' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getWithdrawDetails(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          detailPagination.value.page = res.data.pagination.page;
+          detailPagination.value.pageCount = res.data.pagination.pageCount;
+          detailPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          detailPagination.value.onChange = (page: number) => {
+            detailPagination.value.page = page;
+            loadDetailData();
+          };
+          detailPagination.value.onUpdatePageSize = (pageSize: number) => {
+            detailPagination.value.pageSize = pageSize;
+            detailPagination.value.page = 1;
+            loadDetailData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载明细数据失败');
+      }
+    } catch (error) {
+      console.error('加载明细数据失败:', error);
+      message.error('加载明细数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 处理筛选变化
   function handleFilterChange(filters: any) {
     console.log('筛选条件:', filters);
-    // 这里后续会调用API获取真实数据
+    filterParams.value = {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      admin_username: filters.adminUsername,
+    };
+    
+    // 重置分页并重新加载数据
+    if (viewType.value === 'summary') {
+      dayStatsPagination.value.page = 1;
+      loadData();
+    } else {
+      detailPagination.value.page = 1;
+      loadDetailData();
+    }
   }
 
   // 查看明细
@@ -313,7 +359,14 @@
     console.log('查看明细:', row);
     // 切换到明细视图
     viewType.value = 'detail';
+    detailPagination.value.page = 1;
+    loadDetailData();
   }
+
+  // 初始化加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped>

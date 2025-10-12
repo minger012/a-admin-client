@@ -33,12 +33,13 @@
 
 <script lang="ts" setup>
   import { ref, onMounted } from 'vue';
+  import { getAdminList } from '@/api/system/admin';
 
   interface FilterData {
-    adminId?: number;
+    adminUsername?: string;
     timeType: string;
-    sTime?: number;
-    eTime?: number;
+    startDate?: number;
+    endDate?: number;
   }
 
   const emit = defineEmits<{
@@ -53,13 +54,34 @@
     { label: '自定义', value: '自定义' },
   ];
 
-  // 模拟管理员数据
-  const adminOptions = ref([
+  // 管理员选项
+  const adminOptions = ref<any[]>([
     { label: '所有', value: null },
-    { label: 'admin (管理员)', value: 1 },
-    { label: 'manager01 (经理)', value: 2 },
-    { label: 'operator01 (运营)', value: 3 },
   ]);
+
+  // 加载管理员列表
+  async function loadAdminList() {
+    try {
+      const res: any = await getAdminList({
+        page: '1',
+        pageSize: '1000',
+      });
+      
+      if (res.code === 1 && res.data && res.data.list) {
+        const list = res.data.list.map((admin: any) => ({
+          label: `${admin.username}${admin.name ? ` (${admin.name})` : ''}`,
+          value: admin.id,
+          username: admin.username, // 保存username
+        }));
+        adminOptions.value = [
+          { label: '所有', value: null, username: null },
+          ...list,
+        ];
+      }
+    } catch (error) {
+      console.error('加载管理员列表失败:', error);
+    }
+  }
 
   const selectedAdmin = ref<number | null>(null);
   const activeQuickOption = ref('本月');
@@ -89,20 +111,77 @@
       timeType: activeQuickOption.value,
     };
 
+    // 获取admin_username
     if (selectedAdmin.value) {
-      filterData.adminId = selectedAdmin.value;
+      const selectedAdminObj = adminOptions.value.find(opt => opt.value === selectedAdmin.value);
+      if (selectedAdminObj && selectedAdminObj.username) {
+        filterData.adminUsername = selectedAdminObj.username;
+      }
     }
     
+    // 计算时间范围
+    let startTime: number;
+    let endTime: number;
+    
     if (dateRange.value && dateRange.value.length === 2) {
-      filterData.sTime = Math.floor(dateRange.value[0] / 1000);
-      filterData.eTime = Math.floor(dateRange.value[1] / 1000);
+      // 自定义时间
+      // 开始时间设为 00:00:00
+      const startDate = new Date(dateRange.value[0]);
+      startDate.setHours(0, 0, 0, 0);
+      startTime = Math.floor(startDate.getTime() / 1000);
+      
+      // 结束时间设为 23:59:59
+      const endDate = new Date(dateRange.value[1]);
+      endDate.setHours(23, 59, 59, 999);
+      endTime = Math.floor(endDate.getTime() / 1000);
+    } else {
+      // 根据timeType计算时间范围
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      
+      switch (activeQuickOption.value) {
+        case '今日':
+          // 今天 00:00:00 - 今天 23:59:59
+          startTime = Math.floor(today.getTime() / 1000);
+          endTime = Math.floor(todayEnd.getTime() / 1000);
+          break;
+        case '本周':
+          // 本周日 00:00:00 - 今天 23:59:59
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay());
+          startTime = Math.floor(weekStart.getTime() / 1000);
+          endTime = Math.floor(todayEnd.getTime() / 1000);
+          break;
+        case '本月':
+          // 本月1日 00:00:00 - 今天 23:59:59
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          startTime = Math.floor(monthStart.getTime() / 1000);
+          endTime = Math.floor(todayEnd.getTime() / 1000);
+          break;
+        case '本年':
+          // 本年1月1日 00:00:00 - 今天 23:59:59
+          const yearStart = new Date(now.getFullYear(), 0, 1);
+          startTime = Math.floor(yearStart.getTime() / 1000);
+          endTime = Math.floor(todayEnd.getTime() / 1000);
+          break;
+        default:
+          // 默认本月
+          const defaultStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          startTime = Math.floor(defaultStart.getTime() / 1000);
+          endTime = Math.floor(todayEnd.getTime() / 1000);
+      }
     }
+    
+    filterData.startDate = startTime;
+    filterData.endDate = endTime;
     
     emit('change', filterData);
   }
 
   // 初始加载
   onMounted(() => {
+    loadAdminList();
     emitChange();
   });
 </script>

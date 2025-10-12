@@ -2,14 +2,14 @@
   <div class="ranking-list">
     <div class="ranking-title">{{ title }}</div>
     <div class="ranking-items">
-      <div v-for="(item, index) in items" :key="item.userId" class="ranking-item">
+      <div v-for="(item, index) in items" :key="item.user_id" class="ranking-item">
         <div class="ranking-avatar" :class="`rank-${index + 1}`">
-          {{ index + 1 }}
+          {{ index == 0 ? '🥇' : index == 1 ? '🥈' : index == 2 ? '🥉' : index + 1 }}
         </div>
         <div class="ranking-info">
-          <div class="user-id">{{ item.userId }} (FB: {{ item.fbId }})</div>
+          <div class="user-id">{{ item.user_id }} (FB: {{ item.fb_id }})</div>
           <div class="user-stats">
-            {{ getActionText() }} {{ item.orderCount || item.withdrawCount }} 次，总金额 ¥{{ formatNumber(item.totalAmount) }}
+            {{ getActionText() }} {{ item.order_count || item.withdraw_count }} 次，总金额 ¥{{ formatNumber(item.total_amount) }}
           </div>
         </div>
       </div>
@@ -19,11 +19,11 @@
 
 <script lang="ts" setup>
   interface RankingItem {
-    userId: number;
-    fbId: string;
-    orderCount?: number;
-    withdrawCount?: number;
-    totalAmount: number;
+    user_id: number;
+    fb_id: string;
+    order_count?: number;
+    withdraw_count?: number;
+    total_amount: number;
   }
 
   interface Props {

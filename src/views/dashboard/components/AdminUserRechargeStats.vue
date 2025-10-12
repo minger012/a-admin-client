@@ -6,15 +6,15 @@
       <n-space size="large">
         <div class="summary-item">
           <div class="summary-label">总充值笔数</div>
-          <div class="summary-value">{{ mockData.total_recharge_count }}</div>
+          <div class="summary-value">{{ statsData.total_recharge_count }}</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">总充值金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.total_recharge_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.total_recharge_amount) }}</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">日均充值金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.day_average_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.day_average_amount) }}</div>
         </div>
       </n-space>
 
@@ -28,40 +28,38 @@
     </n-space>
 
     <!-- 汇总视图 -->
-    <div v-if="viewType === 'summary'">
-      <!-- 充值类型统计 -->
-      <n-card :bordered="false" title="充值类型统计" class="mb-4">
-        <n-grid cols="2" :x-gap="16">
-          <n-grid-item>
+     <div  v-if="viewType === 'summary'">
+      <div class="flex mb-4 gap-4">
+        <!-- 充值类型统计 -->
+        <n-card :bordered="false" title="充值类型统计" class="flex-1">
             <n-data-table
               :columns="typeStatsColumns"
-              :data="mockData.type_stats"
+              :data="statsData.type_stats"
               :pagination="false"
               :bordered="false"
+              :loading="loading"
             />
-          </n-grid-item>
-          <n-grid-item>
-            <!-- 充值状态统计 -->
-            <div>
-              <div class="stats-title">充值状态统计</div>
-              <n-data-table
-                :columns="statusStatsColumns"
-                :data="mockData.status_stats"
-                :pagination="false"
-                :bordered="false"
-              />
-            </div>
-          </n-grid-item>
-        </n-grid>
-      </n-card>
+            
+        </n-card>
+        <n-card :bordered="false" title="充值状态统计" class="flex-1">
+          <n-data-table
+              :columns="statusStatsColumns"
+              :data="statsData.status_stats"
+              :pagination="false"
+              :bordered="false"
+              :loading="loading"
+            />
+        </n-card>
+      </div>
 
       <!-- 按日统计 -->
       <n-card :bordered="false" title="按日统计">
         <n-data-table
           :columns="dayStatsColumns"
-          :data="mockData.day_stats"
+          :data="statsData.day_stats"
           :pagination="dayStatsPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -71,9 +69,10 @@
       <n-card :bordered="false" title="明细统计">
         <n-data-table
           :columns="detailColumns"
-          :data="mockData.day_details"
+          :data="statsData.day_details"
           :pagination="detailPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -81,12 +80,22 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, h } from 'vue';
-  import { NButton, NTag } from 'naive-ui';
+  import { ref, h, onMounted } from 'vue';
+  import { NButton, NTag, useMessage } from 'naive-ui';
   import FilterBar from '../shared/FilterBar.vue';
   import ViewSwitch from '../shared/ViewSwitch.vue';
+  import { getRechargeStats, getRechargeDetails } from '@/api/dashboard/statistics';
 
+  const message = useMessage();
   const viewType = ref<'summary' | 'detail'>('summary');
+  const loading = ref(false);
+
+  // 筛选参数
+  const filterParams = ref<any>({
+    start_date: undefined,
+    end_date: undefined,
+    admin_username: undefined,
+  });
 
   // 充值类型枚举
   const rechargeTypeMap = {
@@ -101,158 +110,15 @@
     1: { label: '成功', type: 'success' },
   };
 
-  // 模拟数据
-  const mockData = ref({
-    total_recharge_count: 25,
-    total_recharge_amount: 11870.00,
-    day_average_amount: 1978.33,
-    
-    // 充值类型统计
-    type_stats: [
-      {
-        type_name: '真实充值',
-        type: 1,
-        recharge_count: 24,
-        recharge_amount: 11770.00,
-        percentage: 99.16,
-      },
-      {
-        type_name: '虚拟充值',
-        type: 2,
-        recharge_count: 1,
-        recharge_amount: 100.00,
-        percentage: 0.84,
-      },
-    ],
-    
-    // 充值状态统计
-    status_stats: [
-      {
-        status_name: '成功',
-        status: 1,
-        recharge_count: 25,
-        recharge_amount: 11870.00,
-        percentage: 100.00,
-      },
-    ],
-    
-    // 按日统计
-    day_stats: [
-      {
-        date: '2025-09-10',
-        recharge_count: 1,
-        recharge_amount: 1000.00,
-      },
-      {
-        date: '2025-09-11',
-        recharge_count: 2,
-        recharge_amount: 6000.00,
-      },
-      {
-        date: '2025-09-12',
-        recharge_count: 8,
-        recharge_amount: 1420.00,
-      },
-      {
-        date: '2025-09-13',
-        recharge_count: 2,
-        recharge_amount: 130.00,
-      },
-      {
-        date: '2025-09-14',
-        recharge_count: 11,
-        recharge_amount: 3220.00,
-      },
-      {
-        date: '2025-09-16',
-        recharge_count: 1,
-        recharge_amount: 100.00,
-      },
-    ],
-    
-    // 明细统计
-    day_details: [
-      {
-        id: 1,
-        date: '2025-09-10',
-        type: 1,
-        status: 1,
-        recharge_count: 1,
-        recharge_amount: 1000.00,
-      },
-      {
-        id: 2,
-        date: '2025-09-11',
-        type: 1,
-        status: 1,
-        recharge_count: 2,
-        recharge_amount: 6000.00,
-      },
-      {
-        id: 3,
-        date: '2025-09-12',
-        type: 1,
-        status: 1,
-        recharge_count: 6,
-        recharge_amount: 320.00,
-      },
-      {
-        id: 4,
-        date: '2025-09-12',
-        type: 2,
-        status: 1,
-        recharge_count: 1,
-        recharge_amount: 100.00,
-      },
-      {
-        id: 5,
-        date: '2025-09-12',
-        type: 1,
-        status: 1,
-        recharge_count: 1,
-        recharge_amount: 1000.00,
-      },
-      {
-        id: 6,
-        date: '2025-09-13',
-        type: 1,
-        status: 1,
-        recharge_count: 2,
-        recharge_amount: 130.00,
-      },
-      {
-        id: 7,
-        date: '2025-09-14',
-        type: 1,
-        status: 1,
-        recharge_count: 4,
-        recharge_amount: 760.00,
-      },
-      {
-        id: 8,
-        date: '2025-09-14',
-        type: 1,
-        status: 1,
-        recharge_count: 2,
-        recharge_amount: 60.00,
-      },
-      {
-        id: 9,
-        date: '2025-09-14',
-        type: 1,
-        status: 1,
-        recharge_count: 3,
-        recharge_amount: 1200.00,
-      },
-      {
-        id: 10,
-        date: '2025-09-14',
-        type: 1,
-        status: 1,
-        recharge_count: 1,
-        recharge_amount: 200.00,
-      },
-    ],
+  // 数据状态
+  const statsData = ref({
+    total_recharge_count: 0,
+    total_recharge_amount: 0,
+    day_average_amount: 0,
+    type_stats: [],
+    status_stats: [],
+    day_stats: [],
+    day_details: [],
   });
 
   // 充值类型统计列
@@ -408,23 +274,26 @@
   ];
 
   // 按日统计分页
-  const dayStatsPagination = {
+  const dayStatsPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_stats.length,
+    itemCount: 0,
     showSizePicker: false,
-  };
+    onChange: undefined,
+  });
 
   // 明细分页
-  const detailPagination = {
+  const detailPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_details.length,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: undefined,
+    onUpdatePageSize: undefined,
+  });
 
   // 格式化金额
   function formatMoney(value: number): string {
@@ -434,10 +303,110 @@
     }).format(value);
   }
 
+  // 加载汇总数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(dayStatsPagination.value.pageSize),
+        page: String(dayStatsPagination.value.page),
+        view_type: 'summary' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getRechargeStats(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.total_recharge_count = res.data.total_recharge_count || 0;
+        statsData.value.total_recharge_amount = res.data.total_recharge_amount || 0;
+        statsData.value.day_average_amount = res.data.day_average_amount || 0;
+        statsData.value.type_stats = res.data.type_stats || [];
+        statsData.value.status_stats = res.data.status_stats || [];
+        statsData.value.day_stats = res.data.day_stats || [];
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          dayStatsPagination.value.page = res.data.pagination.page;
+          dayStatsPagination.value.pageCount = res.data.pagination.pageCount;
+          dayStatsPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          dayStatsPagination.value.onChange = (page: number) => {
+            dayStatsPagination.value.page = page;
+            loadData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 加载明细数据
+  async function loadDetailData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(detailPagination.value.pageSize),
+        page: String(detailPagination.value.page),
+        view_type: 'detail' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getRechargeDetails(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          detailPagination.value.page = res.data.pagination.page;
+          detailPagination.value.pageCount = res.data.pagination.pageCount;
+          detailPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          detailPagination.value.onChange = (page: number) => {
+            detailPagination.value.page = page;
+            loadDetailData();
+          };
+          detailPagination.value.onUpdatePageSize = (pageSize: number) => {
+            detailPagination.value.pageSize = pageSize;
+            detailPagination.value.page = 1;
+            loadDetailData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载明细数据失败');
+      }
+    } catch (error) {
+      console.error('加载明细数据失败:', error);
+      message.error('加载明细数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 处理筛选变化
   function handleFilterChange(filters: any) {
     console.log('筛选条件:', filters);
-    // 这里后续会调用API获取真实数据
+    filterParams.value = {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      admin_username: filters.adminUsername,
+    };
+    
+    // 重置分页并重新加载数据
+    if (viewType.value === 'summary') {
+      dayStatsPagination.value.page = 1;
+      loadData();
+    } else {
+      detailPagination.value.page = 1;
+      loadDetailData();
+    }
   }
 
   // 查看明细
@@ -445,7 +414,14 @@
     console.log('查看明细:', row);
     // 切换到明细视图
     viewType.value = 'detail';
+    detailPagination.value.page = 1;
+    loadDetailData();
   }
+
+  // 初始化加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped>

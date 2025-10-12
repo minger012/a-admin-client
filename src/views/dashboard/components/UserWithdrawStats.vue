@@ -6,17 +6,17 @@
       <n-space size="large">
         <div class="summary-item">
           <div class="summary-label">总提现次数</div>
-          <div class="summary-value">{{ mockData.total_withdraw_count }}次</div>
+          <div class="summary-value">{{ statsData.total_withdraw_count }}次</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">总提现金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.total_withdraw_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.total_withdraw_amount) }}</div>
         </div>
       </n-space>
 
       <!-- 右侧：排行榜 -->
       <div class="ranking-box">
-        <RankingList title="提现排行榜" :items="mockData.top_users" action-type="withdraw" />
+        <RankingList title="提现排行榜" :items="statsData.top_users" action-type="withdraw" />
       </div>
     </n-space>
 
@@ -72,21 +72,25 @@
     <n-card :bordered="false">
       <n-data-table
         :columns="detailColumns"
-        :data="mockData.detail_list"
+        :data="statsData.detail_list"
         :pagination="pagination"
         :bordered="false"
         :scroll-x="1500"
+        :loading="loading"
       />
     </n-card>
   </n-space>
 </template>
 
 <script lang="ts" setup>
-  import { ref, h } from 'vue';
-  import { NTag } from 'naive-ui';
+  import { ref, h, onMounted } from 'vue';
+  import { NTag, useMessage } from 'naive-ui';
   import { SearchOutlined } from '@vicons/antd';
   import RankingList from '../shared/RankingList.vue';
+  import { getWithdrawDetailStats } from '@/api/dashboard/statistics';
 
+  const message = useMessage();
+  const loading = ref(false);
   const activeQuickTime = ref('本年');
   const dateRange = ref<[number, number] | null>(null);
 
@@ -120,46 +124,12 @@
     status: null,
   });
 
-  // 模拟数据
-  const mockData = ref({
-    total_withdraw_count: 2,
-    total_withdraw_amount: 20966.40,
-    
-    // 排行榜TOP 3
-    top_users: [
-      {
-        userId: 30,
-        fbId: '1966508563018813440',
-        withdrawCount: 2,
-        totalAmount: 20066.40,
-      },
-    ],
-    
-    // 明细列表
-    detail_list: [
-      {
-        id: 2,
-        user_id: 30,
-        nickname: '用户30',
-        fb_id: '1966508563018813440',
-        withdraw_amount: 12730.40,
-        status: 2,
-        user_remark: '由于用户出...',
-        admin_remark: '',
-        create_time: '2025-09-15T01:54:08+08:00',
-      },
-      {
-        id: 1,
-        user_id: 30,
-        nickname: '用户30',
-        fb_id: '1966508563018813440',
-        withdraw_amount: 87.36,
-        status: 2,
-        user_remark: '私信下架不...',
-        admin_remark: '私信下架不...',
-        create_time: '2025-09-11T01:14:04+08:00',
-      },
-    ],
+  // 数据状态
+  const statsData = ref({
+    total_withdraw_count: 0,
+    total_withdraw_amount: 0,
+    top_users: [],
+    detail_list: [],
   });
 
   // 表格列定义
@@ -226,14 +196,16 @@
   ];
 
   // 分页配置
-  const pagination = {
+  const pagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.detail_list.length,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: undefined,
+    onUpdatePageSize: undefined,
+  });
 
   // 格式化金额
   function formatMoney(value: number): string {
@@ -243,24 +215,123 @@
     }).format(value);
   }
 
+  // 计算时间范围
+  function calculateTimeRange() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = new Date(dateRange.value[0]);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(dateRange.value[1]);
+      endDate.setHours(23, 59, 59, 999);
+      return {
+        start_date: Math.floor(startDate.getTime() / 1000),
+        end_date: Math.floor(endDate.getTime() / 1000),
+      };
+    }
+    
+    switch (activeQuickTime.value) {
+      case '今日':
+        return {
+          start_date: Math.floor(today.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本周':
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        return {
+          start_date: Math.floor(weekStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本月':
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        return {
+          start_date: Math.floor(monthStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本年':
+      default:
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        return {
+          start_date: Math.floor(yearStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+    }
+  }
+
+  // 加载数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      const timeRange = calculateTimeRange();
+      const params: any = {
+        limit: String(pagination.value.pageSize),
+        page: String(pagination.value.page),
+        ...timeRange,
+      };
+
+      // 添加筛选条件
+      if (filters.value.user_id) params.user_id = parseInt(filters.value.user_id);
+      if (filters.value.nickname) params.nickname = filters.value.nickname;
+      if (filters.value.status !== null) params.status = filters.value.status;
+
+      const res: any = await getWithdrawDetailStats(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.total_withdraw_count = res.data.total_recharge_count || 0;
+        statsData.value.total_withdraw_amount = res.data.total_recharge_amount || 0;
+        statsData.value.top_users = res.data.top_users || [];
+        statsData.value.detail_list = res.data.detail_list || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          pagination.value.page = res.data.pagination.page;
+          pagination.value.pageCount = res.data.pagination.pageCount;
+          pagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          pagination.value.onChange = (page: number) => {
+            pagination.value.page = page;
+            loadData();
+          };
+          pagination.value.onUpdatePageSize = (pageSize: number) => {
+            pagination.value.pageSize = pageSize;
+            pagination.value.page = 1;
+            loadData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 快捷时间变化
   function handleQuickTimeChange(value: string) {
     activeQuickTime.value = value;
     if (value !== '自定义') {
       dateRange.value = null;
-      console.log('选择时间:', value);
     }
+    loadData();
   }
 
   // 日期范围变化
   function handleDateRangeChange(value: [number, number] | null) {
-    console.log('自定义时间范围:', value);
+    if (value) {
+      loadData();
+    }
   }
 
   // 查询
   function handleSearch() {
-    console.log('查询条件:', filters.value);
-    // 这里后续会调用API获取真实数据
+    pagination.value.page = 1;
+    loadData();
   }
 
   // 重置
@@ -270,8 +341,14 @@
       nickname: '',
       status: null,
     };
-    console.log('重置筛选');
+    pagination.value.page = 1;
+    loadData();
   }
+
+  // 初始化加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped>

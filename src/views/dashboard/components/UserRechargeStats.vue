@@ -6,17 +6,17 @@
       <n-space size="large">
         <div class="summary-item">
           <div class="summary-label">总充值次数</div>
-          <div class="summary-value">{{ mockData.total_recharge_count }}次</div>
+          <div class="summary-value">{{ statsData.total_recharge_count }}次</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">总充值金额</div>
-          <div class="summary-value">¥{{ formatMoney(mockData.total_recharge_amount) }}</div>
+          <div class="summary-value">￥{{ formatMoney(statsData.total_recharge_amount) }}</div>
         </div>
       </n-space>
 
       <!-- 右侧：排行榜 -->
       <div class="ranking-box">
-        <RankingList title="充值排行榜" :items="mockData.top_users" />
+        <RankingList title="充值排行榜" :items="statsData.top_users" />
       </div>
     </n-space>
 
@@ -51,9 +51,6 @@
         <n-form-item label="用户昵称">
           <n-input v-model:value="filters.nickname" placeholder="请输入" style="width: 150px;" clearable />
         </n-form-item>
-        <n-form-item label="充值方式">
-          <n-select v-model:value="filters.payment_method" :options="paymentMethodOptions" placeholder="请选择" style="width: 150px;" clearable />
-        </n-form-item>
         <n-form-item label="充值类型">
           <n-select v-model:value="filters.recharge_type" :options="rechargeTypeOptions" placeholder="请选择" style="width: 150px;" clearable />
         </n-form-item>
@@ -81,21 +78,25 @@
     <n-card :bordered="false">
       <n-data-table
         :columns="detailColumns"
-        :data="mockData.detail_list"
+        :data="statsData.detail_list"
         :pagination="pagination"
         :bordered="false"
         :scroll-x="2000"
+        :loading="loading"
       />
     </n-card>
   </n-space>
 </template>
 
 <script lang="ts" setup>
-  import { ref, h } from 'vue';
-  import { NTag } from 'naive-ui';
+  import { ref, h, onMounted } from 'vue';
+  import { NTag, useMessage } from 'naive-ui';
   import { SearchOutlined } from '@vicons/antd';
   import RankingList from '../shared/RankingList.vue';
+  import { getRechargeDetailStats } from '@/api/dashboard/statistics';
 
+  const message = useMessage();
+  const loading = ref(false);
   const activeQuickTime = ref('本年');
   const dateRange = ref<[number, number] | null>(null);
 
@@ -128,12 +129,6 @@
     2: { label: '退回失败', type: 'error' },
   };
 
-  // 筛选器选项
-  const paymentMethodOptions = [
-    { label: '系统充值', value: 1 },
-    { label: '支付宝', value: 2 },
-    { label: '微信', value: 3 },
-  ];
 
   const rechargeTypeOptions = [
     { label: '真实充值', value: 1 },
@@ -156,162 +151,17 @@
   const filters = ref({
     user_id: '',
     nickname: '',
-    payment_method: null,
     recharge_type: null,
     status: null,
     refund_status: null,
   });
 
-  // 模拟数据
-  const mockData = ref({
-    total_recharge_count: 27,
-    total_recharge_amount: 15870.00,
-    
-    // 排行榜TOP 3
-    top_users: [
-      {
-        userId: 17,
-        fbId: '1966168463025598144',
-        orderCount: 1,
-        totalAmount: 5000.00,
-      },
-      {
-        userId: 30,
-        fbId: '1966508563018813440',
-        orderCount: 1,
-        totalAmount: 100.00,
-      },
-      {
-        userId: 35,
-        fbId: '1967337265029565632',
-        orderCount: 1,
-        totalAmount: 100.00,
-      },
-    ],
-    
-    // 明细列表
-    detail_list: [
-      {
-        id: 27,
-        user_id: 17,
-        nickname: '用户17',
-        fb_id: '1966030070313871736',
-        recharge_amount: 100,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-17T03:50:12+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 26,
-        user_id: 35,
-        nickname: '用户35',
-        fb_id: '1967337265029565632',
-        recharge_amount: 1000,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T09:26:16+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 25,
-        user_id: 19,
-        nickname: '用户19',
-        fb_id: '1966916916452502144',
-        recharge_amount: 100,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:51:22+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 24,
-        user_id: 19,
-        nickname: '用户19',
-        fb_id: '1966916916452502144',
-        recharge_amount: 100,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:50:52+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 23,
-        user_id: 34,
-        nickname: '用户34',
-        fb_id: '1967283558301044736',
-        recharge_amount: 30,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:50:15+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 22,
-        user_id: 33,
-        nickname: '用户33',
-        fb_id: '1967262977100533760',
-        recharge_amount: 200,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:50:25+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 21,
-        user_id: 32,
-        nickname: '用户32',
-        fb_id: '1967218093045085208',
-        recharge_amount: 200,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:49:24+08:00',
-        refund_status: 0,
-      },
-      {
-        id: 20,
-        user_id: 24,
-        nickname: '用户24',
-        fb_id: '1966170416800075776',
-        recharge_amount: 1000,
-        payment_method: '系统充值',
-        status: 1,
-        recharge_type: 1,
-        temp_status: '真实充值',
-        user_remark: '',
-        admin_remark: '',
-        create_time: '2025-09-15T01:48:41+08:00',
-        refund_status: 0,
-      },
-    ],
+  // 数据状态
+  const statsData = ref({
+    total_recharge_count: 0,
+    total_recharge_amount: 0,
+    top_users: [],
+    detail_list: [],
   });
 
   // 表格列定义
@@ -404,14 +254,16 @@
   ];
 
   // 分页配置
-  const pagination = {
+  const pagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.detail_list.length,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: undefined,
+    onUpdatePageSize: undefined,
+  });
 
   // 格式化金额
   function formatMoney(value: number): string {
@@ -421,24 +273,125 @@
     }).format(value);
   }
 
+  // 计算时间范围
+  function calculateTimeRange() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = new Date(dateRange.value[0]);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(dateRange.value[1]);
+      endDate.setHours(23, 59, 59, 999);
+      return {
+        start_date: Math.floor(startDate.getTime() / 1000),
+        end_date: Math.floor(endDate.getTime() / 1000),
+      };
+    }
+    
+    switch (activeQuickTime.value) {
+      case '今日':
+        return {
+          start_date: Math.floor(today.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本周':
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        return {
+          start_date: Math.floor(weekStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本月':
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        return {
+          start_date: Math.floor(monthStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+      case '本年':
+      default:
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        return {
+          start_date: Math.floor(yearStart.getTime() / 1000),
+          end_date: Math.floor(todayEnd.getTime() / 1000),
+        };
+    }
+  }
+
+  // 加载数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      const timeRange = calculateTimeRange();
+      const params: any = {
+        limit: String(pagination.value.pageSize),
+        page: String(pagination.value.page),
+        ...timeRange,
+      };
+
+      // 添加筛选条件
+      if (filters.value.user_id) params.user_id = parseInt(filters.value.user_id);
+      if (filters.value.nickname) params.nickname = filters.value.nickname;
+      if (filters.value.recharge_type !== null) params.recharge_type = filters.value.recharge_type;
+      if (filters.value.status !== null) params.status = filters.value.status;
+      if (filters.value.refund_status !== null) params.virtual_state = String(filters.value.refund_status);
+
+      const res: any = await getRechargeDetailStats(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.total_recharge_count = res.data.total_withdraw_count || 0;
+        statsData.value.total_recharge_amount = res.data.total_withdraw_amount || 0;
+        statsData.value.top_users = res.data.top_users || [];
+        statsData.value.detail_list = res.data.detail_list || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          pagination.value.page = res.data.pagination.page;
+          pagination.value.pageCount = res.data.pagination.pageCount;
+          pagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          pagination.value.onChange = (page: number) => {
+            pagination.value.page = page;
+            loadData();
+          };
+          pagination.value.onUpdatePageSize = (pageSize: number) => {
+            pagination.value.pageSize = pageSize;
+            pagination.value.page = 1;
+            loadData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
   // 快捷时间变化
   function handleQuickTimeChange(value: string) {
     activeQuickTime.value = value;
     if (value !== '自定义') {
       dateRange.value = null;
-      console.log('选择时间:', value);
     }
+    loadData();
   }
 
   // 日期范围变化
   function handleDateRangeChange(value: [number, number] | null) {
-    console.log('自定义时间范围:', value);
+    if (value) {
+      loadData();
+    }
   }
 
   // 查询
   function handleSearch() {
-    console.log('查询条件:', filters.value);
-    // 这里后续会调用API获取真实数据
+    pagination.value.page = 1;
+    loadData();
   }
 
   // 重置
@@ -446,13 +399,18 @@
     filters.value = {
       user_id: '',
       nickname: '',
-      payment_method: null,
       recharge_type: null,
       status: null,
       refund_status: null,
     };
-    console.log('重置筛选');
+    pagination.value.page = 1;
+    loadData();
   }
+
+  // 初始化加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped>

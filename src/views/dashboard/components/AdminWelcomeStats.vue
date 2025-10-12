@@ -6,11 +6,11 @@
       <n-space size="large">
         <div class="summary-item">
           <div class="summary-label">总邀请用户数</div>
-          <div class="summary-value">{{ mockData.total_register_count }}</div>
+          <div class="summary-value">{{ statsData.total_register_count }}</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">日均邀请用户数</div>
-          <div class="summary-value">{{ mockData.day_average_count.toFixed(2) }}</div>
+          <div class="summary-value">{{ statsData.day_average_count.toFixed(2) }}</div>
         </div>
       </n-space>
 
@@ -29,9 +29,10 @@
       <n-card :bordered="false" title="按月统计" class="mb-4">
         <n-data-table
           :columns="monthColumns"
-          :data="mockData.month_stats"
+          :data="statsData.month_stats"
           :pagination="false"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
 
@@ -39,9 +40,10 @@
       <n-card :bordered="false" title="按日统计">
         <n-data-table
           :columns="dayStatsColumns"
-          :data="mockData.day_stats"
+          :data="statsData.day_stats"
           :pagination="dayStatsPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -51,9 +53,10 @@
       <n-card :bordered="false" title="明细统计">
         <n-data-table
           :columns="detailColumns"
-          :data="mockData.day_details"
+          :data="statsData.day_details"
           :pagination="detailPagination"
           :bordered="false"
+          :loading="loading"
         />
       </n-card>
     </div>
@@ -61,79 +64,36 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, h } from 'vue';
-  import { NButton } from 'naive-ui';
+  import { ref, h, onMounted } from 'vue';
+  import { NButton, useMessage } from 'naive-ui';
   import FilterBar from '../shared/FilterBar.vue';
   import ViewSwitch from '../shared/ViewSwitch.vue';
+  import { getCodeUsageStats, getCodeUsageDetails } from '@/api/dashboard/statistics';
 
+  const message = useMessage();
   const viewType = ref<'summary' | 'detail'>('summary');
+  const loading = ref(false);
 
-  // 模拟数据
-  const mockData = ref({
-    total_register_count: 37,
-    day_average_count: 4.11,
+  // 筛选参数
+  const filterParams = ref<any>({
+    start_date: undefined,
+    end_date: undefined,
+    admin_username: undefined,
+  });
+
+  // 数据状态
+  const statsData = ref({
+    total_register_count: 0,
+    day_average_count: 0,
     // 按月统计
-    month_stats: [
-      {
-        month: '2025年9月',
-        register_count: 37,
-        percentage: 100.00,
-      },
-    ],
+    month_stats: [],
     // 按日统计（汇总视图）
     day_stats: [
-      {
-        date: '2025-09-09',
-        register_count: 3,
-        percentage: 8.11,
-      },
-      {
-        date: '2025-09-10',
-        register_count: 12,
-        percentage: 32.43,
-      },
-      {
-        date: '2025-09-11',
-        register_count: 11,
-        percentage: 29.73,
-      },
-      {
-        date: '2025-09-12',
-        register_count: 3,
-        percentage: 8.11,
-      },
-      {
-        date: '2025-09-14',
-        register_count: 4,
-        percentage: 10.81,
-      },
-      {
-        date: '2025-09-15',
-        register_count: 1,
-        percentage: 2.70,
-      },
-      {
-        date: '2025-09-16',
-        register_count: 1,
-        percentage: 2.70,
-      },
-      {
-        date: '2025-09-18',
-        register_count: 1,
-        percentage: 2.70,
-      },
+      
     ],
     // 明细统计
     day_details: [
-      {
-        id: 14,
-        date: '2025-09-24',
-        year: 2025,
-        month: 9,
-        day: 24,
-        week: 39,
-        register_count: 1,
-      },
+      
     ],
   });
 
@@ -238,28 +198,130 @@
   ];
 
   // 按日统计分页
-  const dayStatsPagination = {
+  const dayStatsPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_stats.length,
+    itemCount: 0,
     showSizePicker: false,
-  };
+    onChange: undefined,
+  });
 
   // 明细分页
-  const detailPagination = {
+  const detailPagination = ref<any>({
     page: 1,
     pageSize: 10,
     pageCount: 1,
-    itemCount: mockData.value.day_details.length,
+    itemCount: 0,
     showSizePicker: true,
     pageSizes: [10, 20, 50],
-  };
+    onChange: undefined,
+    onUpdatePageSize: undefined,
+  });
+
+  // 加载汇总数据
+  async function loadData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(dayStatsPagination.value.pageSize),
+        page: String(dayStatsPagination.value.page),
+        view_type: 'summary' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getCodeUsageStats(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.total_register_count = res.data.total_register_count || 0;
+        statsData.value.day_average_count = res.data.day_average_count || 0;
+        statsData.value.month_stats = res.data.month_stats || [];
+        statsData.value.day_stats = res.data.day_stats || [];
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          dayStatsPagination.value.page = res.data.pagination.page;
+          dayStatsPagination.value.pageCount = res.data.pagination.pageCount;
+          dayStatsPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          dayStatsPagination.value.onChange = (page: number) => {
+            dayStatsPagination.value.page = page;
+            loadData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载数据失败');
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      message.error('加载数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  // 加载明细数据
+  async function loadDetailData() {
+    try {
+      loading.value = true;
+      const params = {
+        limit: String(detailPagination.value.pageSize),
+        page: String(detailPagination.value.page),
+        view_type: 'detail' as const,
+        ...filterParams.value,
+      };
+
+      const res: any = await getCodeUsageDetails(params);
+      
+      if (res.code === 1 && res.data) {
+        statsData.value.day_details = res.data.day_details || [];
+        
+        // 更新分页信息
+        if (res.data.pagination) {
+          detailPagination.value.page = res.data.pagination.page;
+          detailPagination.value.pageSize = res.data.pagination.pageSize;
+          detailPagination.value.pageCount = res.data.pagination.pageCount;
+          detailPagination.value.itemCount = res.data.pagination.itemCount;
+          // 设置分页回调
+          detailPagination.value.onChange = (page: number) => {
+            detailPagination.value.page = page;
+            loadDetailData();
+          };
+          detailPagination.value.onUpdatePageSize = (pageSize: number) => {
+            detailPagination.value.pageSize = pageSize;
+            detailPagination.value.page = 1;
+            loadDetailData();
+          };
+        }
+      } else {
+        message.error(res.message || '加载明细数据失败');
+      }
+    } catch (error) {
+      console.error('加载明细数据失败:', error);
+      message.error('加载明细数据失败');
+    } finally {
+      loading.value = false;
+    }
+  }
 
   // 处理筛选变化
   function handleFilterChange(filters: any) {
     console.log('筛选条件:', filters);
-    // 这里后续会调用API获取真实数据
+    filterParams.value = {
+      start_date: filters.startDate,
+      end_date: filters.endDate,
+      admin_username: filters.adminUsername,
+    };
+    
+    // 重置分页并重新加载数据
+    if (viewType.value === 'summary') {
+      dayStatsPagination.value.page = 1;
+      loadData();
+    } else {
+      detailPagination.value.page = 1;
+      loadDetailData();
+    }
   }
 
   // 查看明细
@@ -267,7 +329,14 @@
     console.log('查看明细:', row);
     // 切换到明细视图
     viewType.value = 'detail';
+    detailPagination.value.page = 1;
+    loadDetailData();
   }
+
+  // 初始化加载数据
+  onMounted(() => {
+    loadData();
+  });
 </script>
 
 <style lang="less" scoped>

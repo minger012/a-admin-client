@@ -175,6 +175,18 @@ export interface StatsParams {
 }
 
 /**
+ * 授权码使用统计请求参数
+ */
+export interface CodeUsageStatsParams {
+  limit: string; // 每页记录数
+  page: string; // 当前页码
+  start_date?: number; // 开始时间
+  end_date?: number; // 结束时间
+  view_type?: 'summary' | 'detail'; // 视图类型
+  admin_username?: string; // 管理员用户名
+}
+
+/**
  * @description: 管理员授权码邀请统计
  */
 export function getAdminWelcomeStats(params: StatsParams) {
@@ -234,6 +246,118 @@ export function getUserWithdrawStats(params: StatsParams) {
     '/admin/statistics/withdraw',
     params,
     {
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取授权码使用统计数据
+ */
+export function getCodeUsageStats(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getCodeUsageStats',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取单独的明细数据（用于明细视图的分页）
+ */
+export function getCodeUsageDetails(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getCodeUsageDetails',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取用户充值统计数据
+ */
+export function getRechargeStats(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getRechargeStats',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取充值明细数据（用于明细视图的分页）
+ */
+export function getRechargeDetails(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getRechargeDetails',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取用户提现统计数据
+ */
+export function getWithdrawStats(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getWithdrawStats',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取提现明细数据（用于明细视图的分页）
+ */
+export function getWithdrawDetails(params: CodeUsageStatsParams) {
+  return Alova.Post(
+    '/admin/index/getWithdrawDetails',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取用户充值明细统计数据
+ */
+export function getRechargeDetailStats(params: any) {
+  return Alova.Post(
+    '/admin/index/getRechargeDetailStats',
+    params,
+    {
+      localCache: null, // 禁用缓存
+      meta: { isReturnNativeResponse: true },
+    }
+  );
+}
+
+/**
+ * @description: 获取用户提现明细统计数据
+ */
+export function getWithdrawDetailStats(params: any) {
+  return Alova.Post(
+    '/admin/index/getWithdrawDetailStats',
+    params,
+    {
+      localCache: null, // 禁用缓存
       meta: { isReturnNativeResponse: true },
     }
   );
