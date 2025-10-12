@@ -50,7 +50,14 @@ const stateTypeMap = {
   2: 'warning',
 };
 
+const openUrl = (url:string)=>{
+  if(!url){
+    return
+  }
+  window.open(url)
+}
 export const createColumns = (handlers?: {
+  onViewBank?: (record: MemberListData) => void;
   onEditBank?: (record: MemberListData) => void;
 }): BasicColumn<MemberListData>[] => [
   {
@@ -143,6 +150,7 @@ export const createColumns = (handlers?: {
             text: true,
             type: 'primary',
             size: 'small',
+            onClick: () => handlers?.onViewBank?.(row),
           }, { default: () => `查看` }),
           h(NButton, {
             text: true,
@@ -183,18 +191,20 @@ export const createColumns = (handlers?: {
     title: '用户视角',
     key: 'user_perspective',
     width: 120,
-    render(row ) {
+    render(row:any) {
       return h(NSpace, { size: 'small', vertical: true }, {
         default: () => [
           h(NButton, {
             text: true,
             type: 'primary',
             size: 'small',
+            onClick: () => openUrl(row.gmUrl?.market),
           }, { default: () => '广告中心' }),
           h(NButton, {
             text: true,
             type: 'info',
             size: 'small',
+            onClick: () => openUrl(row.gmUrl?.order),
           }, { default: () => '计划管理' }),
         ]
       });

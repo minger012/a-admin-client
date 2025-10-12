@@ -16,7 +16,6 @@
       </n-form-item>
       <n-form-item label="保证金" path="pledge_money">
         <n-input-number v-model:value="formParams.pledge_money" :min="0" :precision="2" style="width: 100%">
-          <template #prefix>¥</template>
         </n-input-number>
       </n-form-item>
       <n-form-item label="手机号" path="phone">
@@ -53,14 +52,18 @@
           type="textarea"
           placeholder="请输入提现禁用原因"
           v-model:value="formParams.withdraw_disabled"
-          :autosize="{ minRows: 2, maxRows: 4 }"
+          :autosize="{ minRows: 1, maxRows: 3 }"
         />
       </n-form-item>
       <n-form-item label="客服地址" path="service_address">
         <n-input placeholder="请输入客服地址" v-model:value="formParams.service_address" />
       </n-form-item>
       <n-form-item label="客服类型" path="service_type">
-        <n-input-number v-model:value="formParams.service_type" :min="0" style="width: 100%" />
+        <n-select
+          v-model:value="formParams.service_type"
+          :options="serviceTypeOptions"
+          placeholder="请选择客服类型"
+        />
       </n-form-item>
       <n-form-item label="备注" path="remarks">
         <n-input
@@ -91,6 +94,12 @@
   const formRef = ref();
   const loading = ref(false);
   const showModal = ref(false);
+
+  // 客服类型选项
+  const serviceTypeOptions = [
+    { label: '内嵌', value: 1 },
+    { label: '跳转app', value: 2 }
+  ];
 
   const props = defineProps<{
     visible: boolean;

@@ -11,8 +11,12 @@
       <n-form-item label="用户名">
         <n-input :value="userData?.username" disabled />
       </n-form-item>
-      <n-form-item label="提现模式" path="methods">
-        <n-input placeholder="请输入提现模式" v-model:value="formParams.methods" />
+      <n-form-item label="提现方式" path="methods">
+        <n-select 
+          placeholder="请选择提现方式" 
+          v-model:value="formParams.methods"
+          :options="withdrawMethodOptions"
+        />
       </n-form-item>
       <n-form-item label="货币类型" path="currency">
         <n-input placeholder="请输入货币类型" v-model:value="formParams.currency" />
@@ -47,6 +51,11 @@
   const loading = ref(false);
   const showModal = ref(false);
 
+  // 提现方式选项
+  const withdrawMethodOptions = [
+    { label: '加密货币', value: 'Crypto' }
+  ];
+
   const props = defineProps<{
     visible: boolean;
     userData?: any;
@@ -67,8 +76,8 @@
   const rules: FormRules = {
     methods: {
       required: true,
-      message: '请输入提现模式',
-      trigger: ['blur', 'input'],
+      message: '请选择提现方式',
+      trigger: ['blur', 'change'],
     },
     currency: {
       required: true,

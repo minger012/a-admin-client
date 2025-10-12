@@ -34,6 +34,12 @@
       @success="handleModalSuccess"
     />
 
+    <!-- 查看提现方式弹窗 -->
+    <ViewBankModal
+      v-model:visible="showViewBankModal"
+      :user-data="currentUser"
+    />
+
     <!-- 修改提现方式弹窗 -->
     <EditBankModal
       v-model:visible="showBankModal"
@@ -73,11 +79,11 @@
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
   import { createColumns, MemberListData } from './columns';
   import { getUserList } from '@/api/system/user';
-  import { useMessage, NButton, NSpace, NDropdown, NIcon } from 'naive-ui';
-  import { MoreOutlined } from '@vicons/antd';
+  import { useMessage, NButton, NSpace, NDropdown } from 'naive-ui';
   import EditUserModal from './components/EditUserModal.vue';
   import EditPwdModal from './components/EditPwdModal.vue';
   import EditPayPwdModal from './components/EditPayPwdModal.vue';
+  import ViewBankModal from './components/ViewBankModal.vue';
   import EditBankModal from './components/EditBankModal.vue';
   import RechargeModal from './components/RechargeModal.vue';
   import DeductModal from './components/DeductModal.vue';
@@ -92,6 +98,7 @@
 
   // 创建带回调的columns
   const columns = createColumns({
+    onViewBank: (record) => handleViewBank(record),
     onEditBank: (record) => handleEditBank(record),
   });
 
@@ -99,6 +106,7 @@
   const showEditModal = ref(false);
   const showPwdModal = ref(false);
   const showPayPwdModal = ref(false);
+  const showViewBankModal = ref(false);
   const showBankModal = ref(false);
   const showRechargeModal = ref(false);
   const showDeductModal = ref(false);
@@ -330,6 +338,12 @@
   function handleEditPayPwd(record: MemberListData) {
     currentUser.value = record;
     showPayPwdModal.value = true;
+  }
+
+  // 查看提现方式
+  function handleViewBank(record: MemberListData) {
+    currentUser.value = record;
+    showViewBankModal.value = true;
   }
 
   // 修改提现方式

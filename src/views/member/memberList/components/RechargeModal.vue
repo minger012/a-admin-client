@@ -23,13 +23,11 @@
         </n-input-number>
       </n-form-item>
       <n-form-item label="充值类型" path="type">
-        <n-radio-group v-model:value="formParams.type">
-          <n-space>
-            <n-radio :value="1">真实</n-radio>
-            <n-radio :value="2">虚拟</n-radio>
-            <n-radio :value="3">系统</n-radio>
-          </n-space>
-        </n-radio-group>
+        <n-select
+          v-model:value="formParams.type"
+          :options="rechargeTypeOptions"
+          placeholder="请选择充值类型"
+        />
       </n-form-item>
       <n-form-item label="备注" path="remarks">
         <n-input
@@ -68,6 +66,13 @@
   const formRef = ref();
   const loading = ref(false);
   const showModal = ref(false);
+
+  // 充值类型选项
+  const rechargeTypeOptions = [
+    { label: '真实充值', value: 1 },
+    { label: '虚拟充值', value: 2 },
+    { label: '系统赠送', value: 3 }
+  ];
 
   const props = defineProps<{
     visible: boolean;

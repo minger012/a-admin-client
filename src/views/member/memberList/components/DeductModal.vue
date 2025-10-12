@@ -23,13 +23,11 @@
         </n-input-number>
       </n-form-item>
       <n-form-item label="扣款类型" path="type">
-        <n-radio-group v-model:value="formParams.type">
-          <n-space>
-            <n-radio :value="1">真实</n-radio>
-            <n-radio :value="2">虚拟</n-radio>
-            <n-radio :value="3">系统</n-radio>
-          </n-space>
-        </n-radio-group>
+        <n-select
+          v-model:value="formParams.type"
+          :options="deductTypeOptions"
+          placeholder="请选择扣款类型"
+        />
       </n-form-item>
       <n-form-item label="用户端备注" path="user_remarks">
         <n-input
@@ -60,6 +58,13 @@
   const formRef = ref();
   const loading = ref(false);
   const showModal = ref(false);
+
+  // 扣款类型选项
+  const deductTypeOptions = [
+    { label: '真实扣款', value: 1 },
+    { label: '虚拟扣款', value: 2 },
+    { label: '系统扣款', value: 3 }
+  ];
 
   const props = defineProps<{
     visible: boolean;
