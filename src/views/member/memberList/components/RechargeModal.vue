@@ -18,9 +18,7 @@
           :precision="2"
           placeholder="请输入充值金额"
           style="width: 100%"
-        >
-          <template #prefix>¥</template>
-        </n-input-number>
+        />
       </n-form-item>
       <n-form-item label="充值类型" path="type">
         <n-select

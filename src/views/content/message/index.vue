@@ -11,6 +11,7 @@
       :request="loadDataTable"
       :row-key="(row:MailListData) => row.id"
       ref="actionRef"
+      :actionColumn="actionColumn"
       :scroll-x="1400"
       :striped="true"
     >
@@ -101,16 +102,18 @@
 </template>
 
 <script lang="ts" setup>
-  import { reactive, ref } from 'vue';
-  import { BasicTable } from '@/components/Table';
+  import { h, reactive, ref } from 'vue';
+  import { BasicTable, TableAction } from '@/components/Table';
   import { BasicForm, FormSchema, useForm } from '@/components/Form/index';
+  import { useDialog } from 'naive-ui';
   import { columns, MailListData, typeOptions } from './columns';
-  import { mailList, mailSend } from '@/api/mail';
+  import { mailList, mailSend, mailDelete } from '@/api/mail';
   import { PlusOutlined } from '@vicons/antd';
   import { useMessage } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
 
   const message = useMessage();
+  const dialog = useDialog();
   const actionRef = ref();
   const formRef = ref();
   const showModal = ref(false);
@@ -322,6 +325,50 @@
   function handleReset() {
     searchForm.value = {};
     reloadTable();
+  }
+
+  // 表格操作列配置
+  const actionColumn = reactive({
+    width: 150,
+    title: '操作',
+    key: 'action',
+    fixed: 'right',
+    render(record) {
+      return h(TableAction, {
+        style: 'button',
+        actions: [
+          {
+            label: '删除',
+            type: 'error',
+            onClick: handleDelete.bind(null, record),
+          },
+        ],
+      });
+    },
+  });
+
+  // 删除通知
+  function handleDelete(record: MailListData) {
+    dialog.warning({
+      title: '确认删除',
+      content: `确定要删除这条通知吗？`,
+      positiveText: '确定',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          const res:any = await mailDelete(record.id);
+          if (res.code === 1) {
+            message.success('删除成功');
+            reloadTable();
+          } else {
+            message.error(res.msg || '删除失败');
+          }
+        } catch (error) {
+          console.error('删除失败:', error);
+          message.error('删除失败，请重试');
+        }
+      },
+    });
   }
 </script>
 

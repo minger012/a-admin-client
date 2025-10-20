@@ -752,4 +752,10 @@
   }
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+.n-card {
+  :deep(.n-card__content){
+    padding: 15px;
+  }
+}
+</style>

@@ -17,3 +17,12 @@ export function mailSend(params) {
     meta: { isReturnNativeResponse: true },
   });
 }
+
+/**
+ * @description: 删除通知
+ */
+export function mailDelete(id: number) {
+  return Alova.Post('/admin/mail/del', { id }, {
+    meta: { isReturnNativeResponse: true },
+  });
+}

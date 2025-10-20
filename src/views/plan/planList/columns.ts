@@ -72,6 +72,15 @@ export const columns = [
     ellipsis: {
       tooltip: true,
     },
+    render(row) {
+      return h(
+        'div',
+        {
+          class: ' line-clamp-2',
+        },
+        { default: () => row.intro }
+      );
+    },
   },
   {
     title: '主图',

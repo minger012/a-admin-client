@@ -85,7 +85,7 @@ export function getWithdrawCount() {
     code: number;
     msg: string;
     data: any;
-  }>('/admin/withdraw/withdrawCount', {}, {
+  }>('/admin/index/withdrawCount', {}, {
     meta: {
       isReturnNativeResponse: true,
     },

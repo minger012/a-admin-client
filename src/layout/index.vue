@@ -1,9 +1,6 @@
 <template>
   <n-layout class="layout" :position="fixedMenu" has-sider>
     <n-layout-sider
-      v-if="
-        !isMobile && isMixMenuNoneSub && (navMode === 'vertical' || navMode === 'horizontal-mix')
-      "
       show-trigger="bar"
       @collapse="collapsed = true"
       :position="fixedMenu"
@@ -198,7 +195,7 @@
     display: flex;
     flex-direction: row;
     flex: auto;
-
+    min-width: 1400px;
     &-default-background {
       background: #f5f7f9;
     }

@@ -75,11 +75,11 @@
       <!-- 文本链接区域 -->
       <div class="text-link-area">
         
-        <div class="text-link-item" @click="router.push('/member/rechargeList')">
+        <div class="text-link-item" @click="router.push('/finance/rechargeList')">
           <span>充值订单</span>
         </div>
         
-        <div class="text-link-item" @click="router.push('/member/withdrawalList')">
+        <div class="text-link-item" @click="router.push('/finance/withdrawalList')">
           <span>提现订单</span>
           <div class="badge" v-if="withdrawCount > 0">{{ withdrawCount }}</div>
         </div>
@@ -150,7 +150,7 @@
   import { useUserStore } from '@/store/modules/user';
   import { TABS_ROUTES } from '@/store/mutation-types';
   import { NDialogProvider, useDialog, useMessage } from 'naive-ui';
-  import { computed, defineComponent, reactive, ref, toRefs, unref, onMounted, onUnmounted } from 'vue';
+  import { computed, defineComponent, reactive, ref, toRef, unref, onMounted, onUnmounted } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import components from './components';
   import ProjectSetting from './ProjectSetting.vue';
@@ -418,12 +418,12 @@
       
       // 在组件挂载时启动定时器并添加交互监听
       onMounted(() => {
-       // startTimers();
+        startTimers();
         window.addEventListener("click",onClick)
         // 监听路由变化，重置提醒状态
         router.beforeEach((to) => {
           // 如果导航到提现页面，重置未读状态
-          if (to.path.includes('/member/withdrawalList')) {
+          if (to.path.includes('/finance/withdrawalList')) {
             state.hasUnreadWithdraw = false;
             if (state.notificationTimerId) {
               clearInterval(state.notificationTimerId);
@@ -470,7 +470,7 @@
           eventObject: {
             click: () => {
               // 点击图标时跳转到提现页面并重置未读状态
-              router.push('/member/withdrawalList');
+              router.push('/finance/withdrawalList');
               state.hasUnreadWithdraw = false;
               if (state.notificationTimerId) {
                 clearInterval(state.notificationTimerId);
@@ -513,7 +513,16 @@
       }
 
       return {
-        ...toRefs(state),
+        username: toRef(state, 'username'),
+        fullscreenIcon: toRef(state, 'fullscreenIcon'),
+        navMode: toRef(state, 'navMode'),
+        navTheme: toRef(state, 'navTheme'),
+        headerSetting: toRef(state, 'headerSetting'),
+        withdrawCount: toRef(state, 'withdrawCount'),
+        prevWithdrawCount: toRef(state, 'prevWithdrawCount'),
+        hasUnreadWithdraw: toRef(state, 'hasUnreadWithdraw'),
+        notificationTimerId: toRef(state, 'notificationTimerId'),
+        crumbsSetting: toRef(state, 'crumbsSetting'),
         iconList,
         router,
         toggleFullScreen,

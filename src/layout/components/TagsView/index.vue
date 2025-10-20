@@ -7,7 +7,6 @@
       'tabs-view-default-background': getDarkTheme === false,
       'tabs-view-dark-background': getDarkTheme === true,
     }"
-    :style="getChangeStyle"
   >
     <div class="tabs-view-main">
       <div ref="navWrap" class="tabs-card" :class="{ 'tabs-card-scrollable': scrollable }">
@@ -654,10 +653,10 @@
   }
 
   .tabs-view-fix {
-    position: fixed;
+    position: absolute;
     z-index: 5;
     padding: 6px 10px 6px 10px;
-    left: 200px;
+    left: 0;
   }
 
   .tabs-view-fixed-header {
