@@ -15,7 +15,7 @@
       :row-key="(row:FlowListData) => row.id"
       ref="actionRef"
       v-model:checked-row-keys="checkedRowKeys"
-      :scroll-x="1800"
+      :scroll-x="1900"
       :striped="true"
     >
       <template #tableTitle>

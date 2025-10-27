@@ -10,7 +10,7 @@
       ref="actionRef"
       :actionColumn="actionColumn"
       v-model:checked-row-keys="checkedRowKeys"
-      :scroll-x="1800"
+      :scroll-x="1700"
       :striped="true"
     >
       <template #tableTitle>
@@ -82,7 +82,7 @@
             <n-radio :value="2">驳回</n-radio>
           </n-space>
         </n-radio-group>
-        <div v-if="editForm.originalState !== 0" class="text-gray-500 text-sm mt-2">
+        <div v-if="editForm.originalState !== 0" class="text-gray-500 text-xs ml-2">
           只有待审核状态才可以修改
         </div>
       </n-form-item>

@@ -100,7 +100,7 @@ export const columns = [
   {
     title: 'FB_ID',
     key: 'fb_id',
-    width: 120,
+    width: 180,
   },
   {
     title: '所属管理者',

@@ -77,7 +77,7 @@ export const columns: BasicColumn<WithdrawalListData>[] = [
   },
   {
     title: '提现方式',
-    width: 120,
+    width: 100,
     key: 'methods',
     render(row) {
       return h(NButton, {
@@ -121,7 +121,7 @@ export const columns: BasicColumn<WithdrawalListData>[] = [
   },
   {
     title: '状态',
-    width: 100,
+    width: 80,
     key: 'state',
     fixed:"right",
     render(row) {

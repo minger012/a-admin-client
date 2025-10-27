@@ -73,7 +73,7 @@ export const columns: BasicColumn<RechargeListData>[] = [
   },
   {
     title: '所属管理者',
-    key: 'admin_id',
+    key: 'admin_username',
     width: 120,
   },
   {

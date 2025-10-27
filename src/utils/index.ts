@@ -1,4 +1,4 @@
-import { h, unref } from 'vue';
+import { h, unref, markRaw, toRaw } from 'vue';
 import type { App, Plugin, Component } from 'vue';
 import { NIcon, NTag } from 'naive-ui';
 import { PageEnum } from '@/enums/pageEnum';
@@ -58,12 +58,14 @@ export function generatorMenu(routerMap: Array<any>) {
   return filterRouter(routerMap).map((item) => {
     const isRoot = isRootRouter(item);
     const info = isRoot ? item.children[0] : item;
+    const iconData = isRoot ? item.meta?.icon : info.meta?.icon;
     const currentMenu = {
       ...info,
       ...info.meta,
       label: info.meta?.title,
       key: info.name,
-      icon: isRoot ? item.meta?.icon : info.meta?.icon,
+      // 自动将图标组件转换为渲染函数，使用 toRaw 获取原始对象并用 markRaw 避免响应式包装
+      icon: iconData && typeof iconData !== 'function' ? renderIcon(markRaw(toRaw(iconData))) : iconData,
     };
     // 是否有子菜单，并递归处理
     if (info.children && info.children.length > 0) {
