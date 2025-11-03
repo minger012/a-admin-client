@@ -19,13 +19,18 @@
 
 <script lang="ts" setup>
 import { h } from 'vue';
-import { NButton, NInput, NInputNumber, NIcon } from 'naive-ui';
+import { NButton, NInput, NInputNumber, NIcon, NSpace } from 'naive-ui';
 import { PlusOutlined } from '@vicons/antd';
 
 interface ShopLevel {
   level: string;
   value: number;
   recharge_amount: number;
+  fee_rate_min: number; // 最小手续费率 2-15%
+  fee_rate_max: number; // 最大手续费率 2-15%
+  subordinate_limit: number; // 下线限制，0表示无限制
+  daily_ad_count_min: number; // 每日最少广告投放次数 2-4次
+  daily_ad_count_max: number; // 每日最多广告投放次数 2-4次
 }
 
 interface Props {
@@ -58,10 +63,11 @@ const columns = [
   { 
     title: '星级值', 
     key: 'value', 
-    width: 120,
+    width: 100,
     render: (row: ShopLevel) => {
       return h(NInputNumber, {
         value: row.value,
+        showButton: false,
         onUpdateValue: (v) => {
           row.value = v ?? 0;
           emit('update:modelValue', props.modelValue);
@@ -78,12 +84,97 @@ const columns = [
     render: (row: ShopLevel) => {
       return h(NInputNumber, {
         value: row.recharge_amount,
+        showButton: false,
         onUpdateValue: (v) => {
           row.recharge_amount = v ?? 0;
           emit('update:modelValue', props.modelValue);
         },
         min: 0,
         style: { width: '100%' }
+      });
+    }
+  },
+  { 
+    title: '手续费率(%)', 
+    key: 'fee_rate', 
+    width: 240,
+    render: (row: ShopLevel) => {
+      return h(NSpace, { size: 'small' }, {
+        default: () => [
+          h(NInputNumber, {
+            value: row.fee_rate_min,
+            showButton: false,
+            onUpdateValue: (v) => {
+              row.fee_rate_min = v ?? 2;
+              emit('update:modelValue', props.modelValue);
+            },
+            step: 0.1,
+            placeholder: '最小',
+            style: { width: '90px' }
+          }),
+          h('span', '~'),
+          h(NInputNumber, {
+            value: row.fee_rate_max,
+            showButton: false,
+            onUpdateValue: (v) => {
+              row.fee_rate_max = v ?? 15;
+              emit('update:modelValue', props.modelValue);
+            },
+            step: 0.1,
+            placeholder: '最大',
+            style: { width: '90px' }
+          })
+        ]
+      });
+    }
+  },
+  { 
+    title: '下线限制', 
+    key: 'subordinate_limit', 
+    width: 150,
+    render: (row: ShopLevel) => {
+      return h(NInputNumber, {
+        value: row.subordinate_limit,
+        showButton: false,
+        onUpdateValue: (v) => {
+          row.subordinate_limit = v ?? 0;
+          emit('update:modelValue', props.modelValue);
+        },
+        min: 0,
+        placeholder: '0表示无限制',
+        style: { width: '100%' }
+      });
+    }
+  },
+  { 
+    title: '每日广告投放次数', 
+    key: 'daily_ad_count', 
+    width: 240,
+    render: (row: ShopLevel) => {
+      return h(NSpace, { size: 'small' }, {
+        default: () => [
+          h(NInputNumber, {
+            value: row.daily_ad_count_min,
+            showButton: false,
+            onUpdateValue: (v) => {
+              row.daily_ad_count_min = v ?? 2;
+              emit('update:modelValue', props.modelValue);
+            },
+            placeholder: '最少',
+            style: { width: '90px' }
+          }),
+          h('span', '~'),
+          h(NInputNumber, {
+            showButton: false,
+            value: row.daily_ad_count_max,
+            onUpdateValue: (v) => {
+              row.daily_ad_count_max = v ?? 4;
+              emit('update:modelValue', props.modelValue);
+            },
+            placeholder: '最多',
+            style: { width: '90px' }
+          })
+        ]
       });
     }
   },
@@ -108,7 +199,12 @@ function handleAdd() {
   const newData = [...baseData, {
     level: `星级${baseData.length + 1}`,
     value: baseData.length + 1,
-    recharge_amount: 0
+    recharge_amount: 0,
+    fee_rate_min: 2, // 默认最小2%
+    fee_rate_max: 15, // 默认最大5%
+    subordinate_limit: 0, // 默认无限制
+    daily_ad_count_min: 2, // 默认最少2次
+    daily_ad_count_max: 4 // 默认最大4次
   }];
   emit('update:modelValue', newData);
 }
