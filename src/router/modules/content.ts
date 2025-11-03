@@ -23,6 +23,15 @@ const routes: Array<RouteRecordRaw> = [
         },
         component: () => import('@/views/content/message/index.vue'),
       },
+      {
+        path: 'feedback',
+        name: 'Feedback',
+        meta: {
+          title: '意见反馈',
+          permissions:['*','1102'],
+        },
+        component: () => import('@/views/content/feedback/index.vue'),
+      },
     ],
   },
 ];
