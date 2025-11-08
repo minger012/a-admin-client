@@ -59,6 +59,7 @@ const openUrl = (url:string)=>{
 export const createColumns = (handlers?: {
   onViewBank?: (record: MemberListData) => void;
   onEditBank?: (record: MemberListData) => void;
+  onViewAgent?: (record: MemberListData) => void;
 }): BasicColumn<MemberListData>[] => [
   {
     title: '用户ID',
@@ -126,6 +127,7 @@ export const createColumns = (handlers?: {
         text: true,
         type: 'primary',
         size: 'small',
+        onClick: () => handlers?.onViewAgent?.(row),
       }, { default: () => '查看' });
     },
   },

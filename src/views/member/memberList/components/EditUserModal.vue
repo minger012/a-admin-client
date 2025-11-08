@@ -11,7 +11,7 @@
       <n-form-item label="用户简称" path="short_name">
         <n-input placeholder="请输入用户简称" v-model:value="formParams.short_name" />
       </n-form-item>
-      <n-form-item label="店铺星级" path="lv">
+      <n-form-item label="会员" path="lv">
         <n-select v-model:value="formParams.lv" :options="starOptions" />
       </n-form-item>
       <n-form-item label="保证金" path="pledge_money">
@@ -85,10 +85,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { reactive, ref, watch } from 'vue';
+  import { reactive, ref, watch, onMounted } from 'vue';
   import { useMessage } from 'naive-ui';
   import { type FormRules } from 'naive-ui';
   import { editUser } from '@/api/system/user';
+  import { getConfigList } from '@/api/config';
 
   const message = useMessage();
   const formRef = ref();
@@ -111,13 +112,8 @@
     'success': [];
   }>();
 
-  const starOptions = [
-    { label: '星级1', value: 1 },
-    { label: '星级2', value: 2 },
-    { label: '星级3', value: 3 },
-    { label: '星级4', value: 4 },
-    { label: '星级5', value: 5 },
-  ];
+  // 星级选项（从系统配置中获取）
+  const starOptions = ref<Array<{ label: string; value: number }>>([]);
 
   const formParams = reactive({
     id: 0,
@@ -175,6 +171,55 @@
 
   watch(showModal, (val) => {
     emit('update:visible', val);
+  });
+
+  // 从系统配置加载星级选项
+  const loadStarOptions = async () => {
+    try {
+      const res: any = await getConfigList({
+        page: '1',
+        pageSize: '50',
+      });
+      
+      if (res.code === 1 && res.data.list) {
+        // 查找 VIP 等级配置（id=5）
+        const vipConfig = res.data.list.find((item: any) => item.id === 5);
+        if (vipConfig && vipConfig.value) {
+          // 将配置数据转换为选项格式
+          const levels = Array.isArray(vipConfig.value) ? vipConfig.value : [];
+          starOptions.value = levels.map((level: any) => ({
+            label: level.level || `星级${level.value}`,
+            value: level.value,
+          }));
+        }
+      }
+      
+      // 如果没有获取到配置，使用默认值
+      if (starOptions.value.length === 0) {
+        starOptions.value = [
+          { label: '星级1', value: 1 },
+          { label: '星级2', value: 2 },
+          { label: '星级3', value: 3 },
+          { label: '星级4', value: 4 },
+          { label: '星级5', value: 5 },
+        ];
+      }
+    } catch (error) {
+      console.error('加载星级配置失败:', error);
+      // 使用默认值
+      starOptions.value = [
+        { label: '星级1', value: 1 },
+        { label: '星级2', value: 2 },
+        { label: '星级3', value: 3 },
+        { label: '星级4', value: 4 },
+        { label: '星级5', value: 5 },
+      ];
+    }
+  };
+
+  // 组件挂载时加载星级选项
+  onMounted(() => {
+    loadStarOptions();
   });
 
   const handleClose = () => {

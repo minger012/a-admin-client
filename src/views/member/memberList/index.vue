@@ -70,6 +70,12 @@
 
     <!-- 派单组件 -->
     <DispatchOrder ref="dispatchOrderRef" :uid="currentUserId" />
+
+    <!-- 代理关系弹窗 -->
+    <AgentRelationModal
+      v-model:visible="showAgentModal"
+      :user-data="currentUser"
+    />
   </n-card>
 </template>
 
@@ -89,6 +95,7 @@
   import DeductModal from './components/DeductModal.vue';
   import SendCouponModal from './components/SendCouponModal.vue';
   import DispatchOrder from '@/components/DispatchOrder/index.vue';
+  import AgentRelationModal from './components/AgentRelationModal.vue';
 
   const message = useMessage();
   const actionRef = ref();
@@ -100,6 +107,7 @@
   const columns = createColumns({
     onViewBank: (record) => handleViewBank(record),
     onEditBank: (record) => handleEditBank(record),
+    onViewAgent: (record) => handleViewAgent(record),
   });
 
   // 各种弹窗状态
@@ -111,6 +119,7 @@
   const showRechargeModal = ref(false);
   const showDeductModal = ref(false);
   const showCouponModal = ref(false);
+  const showAgentModal = ref(false);
 
   interface SearchFormType {
     uid?: string | number;
@@ -374,6 +383,12 @@
   function handleDispatch(record: MemberListData) {
     currentUserId.value = record.id;
     dispatchOrderRef.value?.open();
+  }
+
+  // 查看代理关系
+  function handleViewAgent(record: MemberListData) {
+    currentUser.value = record;
+    showAgentModal.value = true;
   }
 
   // 弹窗操作成功后的回调

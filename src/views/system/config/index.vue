@@ -49,13 +49,13 @@
           </n-space>
         </n-card>
 
-        <!-- 店铺星级配置卡片 -->
-        <n-card title="店铺星级配置" :bordered="false" v-if="configMap[5]">
+        <!-- VIP等级配置卡片 -->
+        <n-card title="VIP等级配置" :bordered="false" v-if="configMap[5]">
           <ShopLevelConfig v-model="configMap[5].content" />
         </n-card>
 
-        <!-- 店铺星级多语言映射配置卡片 -->
-        <n-card title="店铺星级多语言映射配置" :bordered="false" v-if="configMap[6]">
+        <!-- VIP等级多语言映射配置卡片 -->
+        <n-card title="VIP等级多语言映射配置" :bordered="false" v-if="configMap[6]">
           <ShopLevelI18nConfig v-model="configMap[6].content" />
         </n-card>
 
@@ -124,8 +124,8 @@ const initConfigMap = () => {
     { id: 2, title: '货币代码', content: 'USD' },
     { id: 3, title: '客服链接', content: [] },
     { id: 4, title: '充值客服链接', content: [] },
-    { id: 5, title: '店铺星级配置', content: [] },
-    { id: 6, title: '店铺星级多语言映射配置', content: {} },
+    { id: 5, title: 'VIP等级配置', content: [] },
+    { id: 6, title: 'VIP等级多语言映射配置', content: {} },
     { id: 7, title: '常见问题配置', content: {} },
     { id: 8, title: '服务条款', content: {} },
     { id: 9, title: '广告中心Banner配置', content: {} },
