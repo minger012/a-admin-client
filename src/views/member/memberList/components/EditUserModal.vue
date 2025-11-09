@@ -135,7 +135,7 @@
 
   const rules: FormRules = {
     phone: {
-      pattern: /^1[3-9]\d{9}$/,
+      pattern: /^\d{6,20}$/,
       message: '请输入正确的手机号',
       trigger: ['blur'],
     },
@@ -155,7 +155,7 @@
         phone: props.userData.phone || '',
         name: props.userData.name || '',
         fb_id: props.userData.fb_id || '',
-        lv: props.userData.lv || 1,
+        lv: props.userData.lv >= 1 ? props.userData.lv : 1,
         state: props.userData.state || 2,
         pledge_money: props.userData.pledge_money || 0,
         pledge_refund: props.userData.pledge_refund || 0,
