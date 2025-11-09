@@ -145,7 +145,7 @@ export const columns = [
     key: 'discount_amount',
     width: 120,
     render(row) {
-      return `${row.type == 5 ? '¥' + row.discount_amount : '-'}`;
+      return `${row.type == 5 ? row.discount_amount : '-'}`;
     },
   },
   {
@@ -153,7 +153,7 @@ export const columns = [
     key: 'min',
     width: 120,
     render(row) {
-      return row.min ? `¥${row.min}` : '无限制';
+      return row.min ? `${row.min}` : '无限制';
     },
   },
   {
@@ -161,7 +161,7 @@ export const columns = [
     key: 'max',
     width: 120,
     render(row) {
-      return row.max ? `¥${row.max}` : '无限制';
+      return row.max ? `${row.max}` : '无限制';
     },
   },
   {

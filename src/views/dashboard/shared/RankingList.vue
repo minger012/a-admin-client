@@ -9,7 +9,7 @@
         <div class="ranking-info">
           <div class="user-id">{{ item.user_id }} (FB: {{ item.fb_id }})</div>
           <div class="user-stats">
-            {{ getActionText() }} {{ item.order_count || item.withdraw_count }} 次，总金额 ¥{{ formatNumber(item.total_amount) }}
+            {{ getActionText() }} {{ item.order_count || item.withdraw_count }} 次，总金额 {{ formatNumber(item.total_amount) }}
           </div>
         </div>
       </div>

@@ -94,7 +94,7 @@
             @update:value="handleRateChange"
           />
           <span class="expected-profit">
-            预期利润: <span class="profit-value">¥{{ expectedProfit.toFixed(2) }}</span>
+            预期利润: <span class="profit-value">{{ expectedProfit.toFixed(2) }}</span>
           </span>
         </n-space>
       </n-form-item>

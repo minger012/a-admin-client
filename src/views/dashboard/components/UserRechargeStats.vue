@@ -192,7 +192,7 @@
       key: 'recharge_amount',
       width: 100,
       render(row: any) {
-        return `¥${row.recharge_amount}`;
+        return `${row.recharge_amount}`;
       },
     },
     {

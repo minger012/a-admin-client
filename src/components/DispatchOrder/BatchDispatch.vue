@@ -43,7 +43,6 @@
           :show-button="false"
           style="width: 200px"
         >
-          <template #prefix>¥</template>
         </n-input-number>
       </n-form-item>
 
@@ -55,7 +54,6 @@
           :show-button="false"
           style="width: 200px"
         >
-          <template #prefix>¥</template>
         </n-input-number>
       </n-form-item>
     </n-space>
@@ -205,7 +203,7 @@ const columns = [
     title: '金额范围',
     key: 'amount',
     width: 120,
-    render: (row: any) => `¥${row.min} - ¥${row.max}`,
+    render: (row: any) => `${row.min} - ${row.max}`,
   },
   {
     title: '利润率',

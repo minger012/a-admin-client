@@ -123,7 +123,7 @@
       key: 'withdraw_amount',
       width: 200,
       render(row: any) {
-        return `¥${formatMoney(row.withdraw_amount)}`;
+        return `${formatMoney(row.withdraw_amount)}`;
       },
     },
     {
@@ -153,7 +153,7 @@
       key: 'withdraw_amount',
       width: 200,
       render(row: any) {
-        return `¥${formatMoney(row.withdraw_amount)}`;
+        return `${formatMoney(row.withdraw_amount)}`;
       },
     },
     {
@@ -214,7 +214,7 @@
       key: 'withdraw_amount',
       width: 180,
       render(row: any) {
-        return `¥${formatMoney(row.withdraw_amount)}`;
+        return `${formatMoney(row.withdraw_amount)}`;
       },
     },
   ];

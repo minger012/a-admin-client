@@ -142,7 +142,6 @@
                 placeholder="请输入折扣金额"
                 style="width: 100%"
               >
-                <template #prefix>¥</template>
               </n-input-number>
             </n-form-item-gi>
             
@@ -163,7 +162,6 @@
                 placeholder="0表示无限制"
                 style="width: 100%"
               >
-                <template #prefix>¥</template>
               </n-input-number>
             </n-form-item-gi>
             
@@ -184,7 +182,6 @@
                 placeholder="0表示无限制"
                 style="width: 100%"
               >
-                <template #prefix>¥</template>
               </n-input-number>
             </n-form-item-gi>
           </n-grid>
@@ -737,9 +734,9 @@
       '是否新人券': isNewMap[item.is_new] || '-',
       '优惠券类型': typeMap[item.type] || '-',
       '折扣百分比': item.type != 5 ? item.discount + '%' : '-',
-      '折扣金额': item.type == 5 ? '¥' + item.discount_amount : '-',
-      '使用最低金额': item.min ? '¥' + item.min : '无限制',
-      '使用最高金额': item.max ? '¥' + item.max : '无限制',
+      '折扣金额': item.type == 5 ? item.discount_amount : '-',
+      '使用最低金额': item.min ? item.min : '无限制',
+      '使用最高金额': item.max ? item.max : '无限制',
       '生效时间': item.expir_type == 2 ? item.start_time ? new Date(item.start_time * 1000).toLocaleString() : '-' : '-',
       '过期时间': item.expir_type == 2 ? item.end_time ? new Date(item.end_time * 1000).toLocaleString() : '-' : '-',
       '用户券有效天数': item.expir_type == 1 ? item.expir_day + '天' : '无限制',

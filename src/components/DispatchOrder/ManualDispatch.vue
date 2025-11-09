@@ -48,7 +48,6 @@
                 placeholder="最低金额"
                 style="width: 180px"
               >
-                <template #prefix>¥</template>
               </n-input-number>
             </n-form-item>
 
@@ -60,7 +59,6 @@
                 placeholder="最高金额"
                 style="width: 180px"
               >
-                <template #prefix>¥</template>
               </n-input-number>
             </n-form-item>
           </n-space>
@@ -200,7 +198,7 @@ const summaryColumns = [
     title: '金额范围',
     key: 'amount',
     width: 120,
-    render: (row: ManualPlan) => `¥${row.min || 0} - ¥${row.max || 0}`,
+    render: (row: ManualPlan) => `${row.min || 0} - ${row.max || 0}`,
   },
   {
     title: '利润率',

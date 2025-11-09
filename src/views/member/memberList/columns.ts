@@ -169,7 +169,7 @@ export const createColumns = (handlers?: {
     key: 'money',
     width: 120,
     render(row) {
-      return `¥${(row.money || 0).toFixed(2)}`;
+      return `${(row.money || 0).toFixed(2)}`;
     },
   },
   {

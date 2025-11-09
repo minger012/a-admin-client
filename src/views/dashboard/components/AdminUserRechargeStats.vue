@@ -142,7 +142,7 @@
       key: 'recharge_amount',
       width: 150,
       render(row: any) {
-        return `¥${formatMoney(row.recharge_amount)}`;
+        return `${formatMoney(row.recharge_amount)}`;
       },
     },
     {
@@ -176,7 +176,7 @@
       key: 'recharge_amount',
       width: 150,
       render(row: any) {
-        return `¥${formatMoney(row.recharge_amount)}`;
+        return `${formatMoney(row.recharge_amount)}`;
       },
     },
     {
@@ -206,7 +206,7 @@
       key: 'recharge_amount',
       width: 150,
       render(row: any) {
-        return `¥${formatMoney(row.recharge_amount)}`;
+        return `${formatMoney(row.recharge_amount)}`;
       },
     },
     {
@@ -268,7 +268,7 @@
       key: 'recharge_amount',
       width: 150,
       render(row: any) {
-        return `¥${formatMoney(row.recharge_amount)}`;
+        return `${formatMoney(row.recharge_amount)}`;
       },
     },
   ];

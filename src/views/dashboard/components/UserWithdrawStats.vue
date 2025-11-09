@@ -160,7 +160,7 @@
       key: 'withdraw_amount',
       width: 120,
       render(row: any) {
-        return `¥${formatMoney(row.withdraw_amount)}`;
+        return `${formatMoney(row.withdraw_amount)}`;
       },
     },
     {
