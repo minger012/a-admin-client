@@ -54,7 +54,7 @@
       <n-form-item label="消耗时间(分钟)" path="cd">
         <n-input-number
           v-model:value="formData.cd"
-          :min="0"
+          :min="1"
           placeholder="请输入消耗时间"
           style="width: 100%"
         />
@@ -63,7 +63,8 @@
       <n-form-item label="最低投放金额" path="min">
         <n-input-number
           v-model:value="formData.min"
-          :min="0"
+          :min="0.01"
+          :precision="2"
           :disabled="originalState !== 0"
           placeholder="请输入最低投放金额"
           style="width: 100%"
@@ -73,7 +74,8 @@
       <n-form-item label="最高投放金额" path="max">
         <n-input-number
           v-model:value="formData.max"
-          :min="0"
+          :min="0.01"
+          :precision="2"
           :disabled="originalState !== 0"
           placeholder="请输入最高投放金额"
           style="width: 100%"
@@ -84,7 +86,8 @@
         <n-space>
           <n-input-number
             v-model:value="formData.rate"
-            :min="0"
+            :min="0.01"
+            :precision="2"
             :disabled="originalState !== 0 && originalState !== 1"
             placeholder="请输入投放利润率"
             style="width: 200px"
@@ -203,14 +206,109 @@ const stateOptions = computed(() => {
 
 // 表单验证规则
 const rules = {
-  show_num: { required: true, type: 'number', message: '请输入展示数', trigger: 'blur' },
-  click_num: { required: true, type: 'number', message: '请输入点击数', trigger: 'blur' },
-  click_price: { required: true, type: 'number', message: '请输入点击单价', trigger: 'blur' },
-  cd: { required: true, type: 'number', message: '请输入消耗时间', trigger: 'blur' },
-  min: { required: true, type: 'number', message: '请输入最低投放金额', trigger: 'blur' },
-  max: { required: true, type: 'number', message: '请输入最高投放金额', trigger: 'blur' },
-  rate: { required: true, type: 'number', message: '请输入投放利润率', trigger: 'blur' },
-  state: { required: true, type: 'number', message: '请选择投放状态', trigger: 'change' },
+  show_num: [
+    { required: true, type: 'number', message: '请输入展示数', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (!Number.isInteger(value)) {
+          return new Error('展示数必须是整数');
+        }
+        if (value < 0) {
+          return new Error('展示数必须大于等于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  click_num: [
+    { required: true, type: 'number', message: '请输入点击数', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (!Number.isInteger(value)) {
+          return new Error('点击数必须是整数');
+        }
+        if (value < 0) {
+          return new Error('点击数必须大于等于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  click_price: [
+    { required: true, type: 'number', message: '请输入点击单价', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (value < 0) {
+          return new Error('点击单价必须大于等于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  cd: [
+    { required: true, type: 'number', message: '请输入消耗时间', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (!Number.isInteger(value)) {
+          return new Error('消耗时间必须是整数');
+        }
+        if (value <= 0) {
+          return new Error('消耗时间必须大于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  min: [
+    { required: true, type: 'number', message: '请输入最低投放金额', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (value <= 0) {
+          return new Error('最低投放金额必须大于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  max: [
+    { required: true, type: 'number', message: '请输入最高投放金额', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (value <= 0) {
+          return new Error('最高投放金额必须大于0');
+        }
+        if (value < formData.value.min) {
+          return new Error('最高投放金额必须大于等于最低投放金额');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
+  rate: [
+    { required: true, type: 'number', message: '请输入投放利润率', trigger: 'blur' },
+    { 
+      type: 'number', 
+      validator: (rule: any, value: number) => {
+        if (value <= 0) {
+          return new Error('投放利润率必须大于0');
+        }
+        return true;
+      },
+      trigger: 'blur'
+    }
+  ],
 };
 
 // 监听数据变化，初始化表单
