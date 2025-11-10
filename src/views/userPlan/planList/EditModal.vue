@@ -342,13 +342,21 @@ function handleClickDataChange() {
   }
 }
 
-// 利润率变化时，随机重新计算展示数、点击数、点击单价
+// 利润率变化时，重新计算展示数、点击数、点击单价
 function handleRateChange() {
   if (expectedProfit.value > 0) {
-    // 设定合理的点击单价范围 (0.1-2元)
-    const minClickPrice = 0.1;
-    const maxClickPrice = 2;
-    const targetClickPrice = Math.random() * (maxClickPrice - minClickPrice) + minClickPrice;
+    let targetClickPrice: number;
+    
+    // 只有当点击单价为0时，才自动生成单价
+    if (formData.value.click_price === 0) {
+      // 设定合理的点击单价范围 (0.1-2元)
+      const minClickPrice = 0.1;
+      const maxClickPrice = 2;
+      targetClickPrice = Math.random() * (maxClickPrice - minClickPrice) + minClickPrice;
+    } else {
+      // 使用用户设置的单价
+      targetClickPrice = formData.value.click_price;
+    }
     
     // 根据预期利润和目标点击单价计算需要的点击数
     const requiredClickNum = Math.ceil(expectedProfit.value / targetClickPrice);
@@ -362,8 +370,10 @@ function handleRateChange() {
     // 设置计算出的值
     formData.value.show_num = requiredShowNum;
     formData.value.click_num = requiredClickNum;
-    formData.value.click_price = Number(targetClickPrice.toFixed(2));
-    
+    // 只有当点击单价为0时，才更新点击单价
+    if (formData.value.click_price === 0) {
+      formData.value.click_price = Number(targetClickPrice.toFixed(2));
+    }
   }
 }
 

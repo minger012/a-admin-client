@@ -81,7 +81,7 @@
         </div>
         <div class="field-item">
           <span class="label">广告收入:</span>
-          <span class="value">{{ data.click_money }}</span>
+          <span class="value">{{ data.ad_revenue }}</span>
         </div>
         <div class="field-item">
           <span class="label">实际利润率:</span>
