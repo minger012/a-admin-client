@@ -12,7 +12,6 @@
       :striped="true"
     >
     </BasicTable>
-
     <!-- 编辑用户信息弹窗 -->
     <EditUserModal
       v-model:visible="showEditModal"
@@ -96,7 +95,9 @@
   import SendCouponModal from './components/SendCouponModal.vue';
   import DispatchOrder from '@/components/DispatchOrder/index.vue';
   import AgentRelationModal from './components/AgentRelationModal.vue';
+  import { useUserStore } from '@/store/modules/user';
 
+  const userStore = useUserStore();
   const message = useMessage();
   const actionRef = ref();
   const currentUser = ref<any>(null);
@@ -236,12 +237,12 @@
 
       return h(NSpace, { vertical: true, size: 'small' }, {
         default: () => [
-          h(NButton, {
+          ...(userStore.info.id == 1 ? [h(NButton, {
             text: true,
             type: 'primary',
             size: 'small',
             onClick: () => handleRecharge(record),
-          }, { default: () => '充值' }),
+          }, { default: () => '充值' })] : []),
           h(NButton, {
             text: true,
             type: 'primary',

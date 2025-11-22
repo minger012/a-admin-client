@@ -33,6 +33,15 @@ const routes: Array<RouteRecordRaw> = [
           permissions:['*','1001'],
         },
         component: () => import('@/views/member/memberList/index.vue'),
+      },
+      {
+        path: 'realnameList',
+        name: 'RealnameList',
+        meta: {
+          title: '实名管理',
+          permissions:['*','1002'],
+        },
+        component: () => import('@/views/member/realnameList/index.vue'),
       }
     ],
   },
