@@ -1,5 +1,5 @@
 import { h } from 'vue';
-import { NTag, NImage } from 'naive-ui';
+import { NTag, NImage, NImageGroup } from 'naive-ui';
 import { BasicColumn } from '@/components/Table';
 
 export interface RealnameListData {
@@ -76,21 +76,17 @@ export const createColumns = (): BasicColumn<RealnameListData>[] => {
       key: 'images',
       width: 200,
       render(row) {
-        const imageUrl = import.meta.env.VITE_GLOB_API_URL || '';
-        return h(NImage.ImageGroup, null, {
+        return h(NImageGroup, null, {
           default: () => [
             row.front_image ? h(NImage, {
-              width: 60,
-              height: 40,
-              src: imageUrl + row.front_image,
+              src: row.front_image,
               objectFit: 'cover',
-              style: { marginRight: '8px' }
+              style: { marginRight: '8px',width: '60px',height: '40px' }
             }) : null,
             row.back_image ? h(NImage, {
-              width: 60,
-              height: 40,
-              src: imageUrl + row.back_image,
-              objectFit: 'cover'
+              src: row.back_image,
+              objectFit: 'cover',
+              style: { marginRight: '8px',width: '60px',height: '40px' }
             }) : null,
           ].filter(Boolean)
         });
