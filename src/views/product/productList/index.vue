@@ -94,7 +94,7 @@
             :headers="{'Authorization': userStore.getToken}"
             @finish="(e) => handleUploadFinish(e, 'logo')"
             @error="handleUploadError"
-            @remove="() => handleRemove('logo')"
+            @remove="(options) => handleRemove(options, 'logo')"
           >
             上传Logo
           </n-upload>
