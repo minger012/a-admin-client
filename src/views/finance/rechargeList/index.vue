@@ -101,7 +101,7 @@
         options: [
           { label: '全部', value: '' },
           { label: '真实充值', value: 1 },
-          { label: '虚拟充值', value: 2 },
+          // { label: '虚拟充值', value: 2 },
           { label: '系统赠送', value: 3 },
         ],
         clearable: true,
@@ -344,7 +344,7 @@
       '充值截图': item.image || '-',
       '充值方式': typeMap[item.type] || '-',
       '状态': stateMap[item.state] || '-',
-      '虚拟充值退回状态': item.type === 2 ? virtualStateMap[item.virtual_state] || '-' : '-',
+      // '虚拟充值退回状态': item.type === 2 ? virtualStateMap[item.virtual_state] || '-' : '-',
       '后台备注': item.remarks || '-',
       '用户端备注': item.user_remarks || '-',
       '更新时间': item.update_time ? new Date(item.update_time * 1000).toLocaleString() : '-',

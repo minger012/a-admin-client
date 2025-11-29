@@ -57,9 +57,9 @@
         <n-form-item label="状态">
           <n-select v-model:value="filters.status" :options="statusOptions" placeholder="请选择" style="width: 150px;" clearable />
         </n-form-item>
-        <n-form-item label="虚拟充值退款状态">
+        <!-- <n-form-item label="虚拟充值退款状态">
           <n-select v-model:value="filters.refund_status" :options="refundStatusOptions" placeholder="请选择" style="width: 150px;" clearable />
-        </n-form-item>
+        </n-form-item> -->
         <n-form-item>
           <n-space>
             <n-button type="primary" @click="handleSearch">
@@ -132,7 +132,7 @@
 
   const rechargeTypeOptions = [
     { label: '真实充值', value: 1 },
-    { label: '虚拟充值', value: 2 },
+    // { label: '虚拟充值', value: 2 },
     { label: '系统赠送', value: 3 },
   ];
 

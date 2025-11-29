@@ -68,7 +68,7 @@
   // 充值类型选项
   const rechargeTypeOptions = [
     { label: '真实充值', value: 1 },
-    { label: '虚拟充值', value: 2 },
+    // { label: '虚拟充值', value: 2 },
     { label: '系统赠送', value: 3 }
   ];
 

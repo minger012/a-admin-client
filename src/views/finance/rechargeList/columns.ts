@@ -134,25 +134,25 @@ export const columns: BasicColumn<RechargeListData>[] = [
       );
     },
   },
-  {
-    title: '虚拟充值退回状态',
-    key: 'virtual_state',
-    width: 150,
-    render(record) {
-      if (record.type !== 2) {
-        return h('span', {}, '-');
-      }
-      return h(
-        NTag,
-        {
-          type: record.virtual_state === 1 ? 'success' : 'default',
-        },
-        {
-          default: () => virtualStateMap[record.virtual_state] || '-',
-        }
-      );
-    },
-  },
+  // {
+  //   title: '虚拟充值退回状态',
+  //   key: 'virtual_state',
+  //   width: 150,
+  //   render(record) {
+  //     if (record.type !== 2) {
+  //       return h('span', {}, '-');
+  //     }
+  //     return h(
+  //       NTag,
+  //       {
+  //         type: record.virtual_state === 1 ? 'success' : 'default',
+  //       },
+  //       {
+  //         default: () => virtualStateMap[record.virtual_state] || '-',
+  //       }
+  //     );
+  //   },
+  // },
   {
     title: '后台备注',
     key: 'remarks',

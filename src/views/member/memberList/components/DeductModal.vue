@@ -60,7 +60,7 @@
   // 扣款类型选项
   const deductTypeOptions = [
     { label: '真实扣款', value: 1 },
-    { label: '虚拟扣款', value: 2 },
+    // { label: '虚拟扣款', value: 2 },
     { label: '系统扣款', value: 3 }
   ];
 
